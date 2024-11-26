@@ -1,0 +1,31 @@
+name: Checks
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - '**'
+  push:
+    branches:
+      - 'main'
+
+jobs:
+  build_all:
+    name: Build All
+    runs-on: ubuntu-22.04
+    steps:
+    - name: git checkout
+      uses: actions/checkout@v3
+    - name: Install Nix
+      uses: DeterminateSystems/nix-installer-action@main
+    - uses: DeterminateSystems/magic-nix-cache-action@main
+      with:
+        use-flakehub: false # Only upload to GitHub Actions cache
+    - name: Build Nix
+      shell: bash
+      run: |
+        nix flake check \
+          --keep-going \
+          --no-update-lock-file \
+          --print-build-logs \
+          --show-trace
