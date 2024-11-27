@@ -7,6 +7,14 @@ This crate and the API behind it are unstable in a number of ways:
 1. The API of this crate may be broken at any time.
 2. This crate may expose experimental interfaces and services which are completely unsupported. There is no indication of which interfaces these are. Both the Rust APIs and the backing APIs and implementations may change at any time with no notice.
 
+## Support
+
+No support is provided for this code or the API directly. However, if you are experiencing issues with your Obscura VPN service please contact <support@obscura.net>.
+
+## Contributions
+
+At this time we are unable to accept external contributions. This is something that we plan to resolve soon. However until we finish the paperwork we are unable to look at any patches and will close all PRs without looking at them.
+
 ## Development
 
 To enter a setup environment run:
