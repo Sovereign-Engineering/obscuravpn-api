@@ -1,8 +1,12 @@
 [package]
 name = "obscuravpn-api"
-version = "0.5.0"
+version = "0.0.0"
 edition = "2021"
+
+description = "API client for Obscura VPN."
+homepage = "https://github.com/Sovereign-Engineering/obscuravpn-api"
 license = "PolyForm-Noncommercial-1.0.0"
+repository = "https://github.com/Sovereign-Engineering/obscuravpn-api"
 
 [dependencies]
 anyhow = "1"
