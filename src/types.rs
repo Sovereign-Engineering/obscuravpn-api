@@ -22,13 +22,13 @@ pub struct TopUp {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Subscription {
     /// string repr of [`stripe::SubscriptionStatus`][https://docs.rs/async-stripe/latest/stripe/enum.SubscriptionStatus.html]
-    status: String,
+    pub status: String,
     /// period start in seconds since unix epoch
-    current_period_start: i64,
+    pub current_period_start: i64,
     /// period end in seconds since unix epoch
-    current_period_end: i64,
+    pub current_period_end: i64,
     /// whether the subscription will end at this period
-    cancel_at_period_end: bool,
+    pub cancel_at_period_end: bool,
 }
 
 impl Subscription {
