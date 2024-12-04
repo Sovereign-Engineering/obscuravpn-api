@@ -66,6 +66,7 @@ pub enum ApiErrorKind {
     InternalError {},
     MissingOrInvalidAuthToken {},
     NoApiRoute {},
+    NoLongerSupported {},
     NoMatchingExit {},
     RateLimitExceeded {},
     SignupLimitExceeded {},
