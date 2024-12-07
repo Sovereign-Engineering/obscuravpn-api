@@ -1,5 +1,6 @@
 mod account;
 mod exit;
+mod exit2;
 mod lightning;
 mod prices;
 mod relay;
@@ -8,6 +9,7 @@ mod tunnel;
 
 pub use account::*;
 pub use exit::*;
+pub use exit2::*;
 pub use lightning::*;
 pub use prices::*;
 pub use relay::*;

@@ -73,7 +73,7 @@ async fn main() -> anyhow::Result<()> {
         }
         Commands::ListExits => {
             eprintln!("Get all exits");
-            let exits = client.run(ListExits {}).await?;
+            let exits = client.run(ListExits2 {}).await?.exits;
             println!("{:#?}", exits);
         }
         Commands::ListTunnels => {
