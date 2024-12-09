@@ -54,9 +54,23 @@ pub struct OneTunnel {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum TunnelStatus {
-    Created { when: i64 },
-    Connected { when: i64 },
-    Disconnected { when: i64 },
+    /// The tunnel has been created but not used yet.
+    Created {
+        /// Timestamp when this status was last updated.
+        when: i64,
+    },
+    Connected {
+        /// Timestamp when this status was last updated.
+        ///
+        /// Note: Not the timestamp when the tunnel was last connected to.
+        when: i64,
+    },
+    Disconnected {
+        /// Timestamp when this status was last updated.
+        ///
+        /// Note: This typically is the time when the tunnel was disconnected but that shouldn't be assumed.
+        when: i64,
+    },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
