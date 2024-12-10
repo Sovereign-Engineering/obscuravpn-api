@@ -170,6 +170,12 @@ pub struct OneRelay {
     pub id: String,
     pub ip_v4: net::Ipv4Addr,
     pub ip_v6: net::Ipv6Addr,
+    pub preferred_exits: Vec<RelayPreferredExit>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct RelayPreferredExit {
+    pub id: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
