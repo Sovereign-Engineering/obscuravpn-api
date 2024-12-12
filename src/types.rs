@@ -182,6 +182,7 @@ pub struct RelayPreferredExit {
 pub struct OneExit {
     pub id: String,
     pub country_code: String,
+    pub city_code: String,
     pub city_name: String,
 }
 
