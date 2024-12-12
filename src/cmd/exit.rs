@@ -22,6 +22,7 @@ fn test_json() {
       {
         "id": "NYC-001",
         "country_code": "US",
+        "city_code": "nyc",
         "city_name": "New York"
       }
     ]

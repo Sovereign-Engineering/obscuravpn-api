@@ -48,6 +48,7 @@ fn test_json() {
       "exit": {
         "id": "NYC-001",
         "country_code": "US",
+        "city_code": "nyc",
         "city_name": "New York"
       }
     }]
