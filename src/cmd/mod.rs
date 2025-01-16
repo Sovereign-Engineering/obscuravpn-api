@@ -1,4 +1,5 @@
 mod account;
+mod cache_wg_key;
 mod exit;
 mod exit2;
 mod lightning;
@@ -8,6 +9,7 @@ mod stripe;
 mod tunnel;
 
 pub use account::*;
+pub use cache_wg_key::*;
 pub use exit::*;
 pub use exit2::*;
 pub use lightning::*;
@@ -73,6 +75,7 @@ pub enum ApiErrorKind {
     RateLimitExceeded {},
     SignupLimitExceeded {},
     TunnelLimitExceeded {},
+    WgKeyRotationRequired {},
 
     #[serde(untagged)]
     Unknown(serde_json::Value),
