@@ -5,6 +5,7 @@ const LIGHTNING_TOP_UP_PATH: &str = "lightning/top_up";
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct LightningTopUpInfo {
+    pub id: String,
     pub invoice: String,
 }
 
