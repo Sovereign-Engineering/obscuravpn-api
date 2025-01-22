@@ -2,7 +2,7 @@ use anyhow::bail;
 use base64::{engine::general_purpose::STANDARD, Engine as _};
 use clap::{Parser, Subcommand};
 use obscuravpn_api::cmd::*;
-use obscuravpn_api::types::{TunnelConfig, WgPubkey};
+use obscuravpn_api::types::{AccountId, TunnelConfig, WgPubkey};
 use obscuravpn_api::wg_conf::build_wg_conf;
 use obscuravpn_api::Client;
 use qrcode::QrCode;
@@ -57,7 +57,7 @@ async fn main() -> anyhow::Result<()> {
     env_logger::init();
     let args = Args::parse();
     let url = args.base_url;
-    let account_id = args.account_no;
+    let account_id = AccountId::from_string_unchecked(args.account_no);
 
     let client = Client::new(url, account_id, "example cli client")?;
 

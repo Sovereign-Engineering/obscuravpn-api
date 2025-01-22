@@ -6,9 +6,39 @@ use ipnetwork;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
 use thiserror::Error;
 
+#[derive(Clone, PartialEq, Eq, Deserialize, Serialize)]
+pub struct AccountId(String);
+
+impl AccountId {
+    pub fn from_string_unchecked(id: String) -> Self {
+        AccountId(id)
+    }
+
+    // The digit portion of the account hint.
+    pub fn hint(&self) -> &str {
+        &self.0[0..3]
+    }
+
+    pub fn as_string(self) -> String {
+        self.0
+    }
+}
+
+impl std::fmt::Display for AccountId {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        std::fmt::Display::fmt(&self.0, f)
+    }
+}
+
+impl std::fmt::Debug for AccountId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "AccountId({}...)", self.hint())
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AccountInfo {
-    pub id: String,
+    pub id: AccountId,
     pub active: bool,
     pub top_up: Option<TopUp>,
     pub subscription: Option<Subscription>,

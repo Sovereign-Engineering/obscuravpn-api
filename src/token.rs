@@ -1,9 +1,11 @@
 use serde::{Deserialize, Serialize};
 use url::Url;
 
+use crate::types::AccountId;
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AcquireToken {
-    pub account_id: String,
+    pub account_id: AccountId,
 }
 
 impl AcquireToken {
