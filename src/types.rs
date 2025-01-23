@@ -16,12 +16,33 @@ impl AccountId {
 
     // The digit portion of the account hint.
     pub fn hint(&self) -> &str {
-        &self.0[0..3]
+        // We don't currently enforce correctness for the account ID so this method needs to be forgiving.
+
+        match self.0.char_indices().nth(3) {
+            Some((i, _)) => &self.0[..i],
+            None => &self.0,
+        }
     }
 
     pub fn as_string(self) -> String {
         self.0
     }
+}
+
+#[test]
+fn test_account_id_hint() {
+    assert_eq!(AccountId::from_string_unchecked("".into()).hint(), "");
+    assert_eq!(AccountId::from_string_unchecked("a".into()).hint(), "a");
+    assert_eq!(AccountId::from_string_unchecked("ab".into()).hint(), "ab");
+    assert_eq!(AccountId::from_string_unchecked("abc".into()).hint(), "abc");
+    assert_eq!(AccountId::from_string_unchecked("abcd".into()).hint(), "abc");
+    assert_eq!(AccountId::from_string_unchecked("30493434963831824517".into()).hint(), "304");
+    assert_eq!(
+        AccountId::from_string_unchecked("3049343496383182451730493434963831824517".into()).hint(),
+        "304"
+    );
+
+    assert_eq!(AccountId::from_string_unchecked("😛🤠🙃😉".into()).hint(), "😛🤠🙃");
 }
 
 impl std::fmt::Display for AccountId {
