@@ -1,6 +1,6 @@
 use crate::cmd::{parse_response, ApiError, ApiErrorKind, Cmd, ProtocolError};
 use crate::token::AcquireToken;
-use crate::types::AuthToken;
+use crate::types::{AccountId, AuthToken};
 use anyhow::{anyhow, Context};
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -9,7 +9,7 @@ use thiserror::Error;
 
 #[derive(Debug)]
 pub struct Client {
-    account_id: String,
+    account_id: AccountId,
     base_url: String,
     http: reqwest::Client,
     cached_auth_token: Arc<Mutex<Option<AuthToken>>>,
@@ -30,7 +30,7 @@ pub enum ClientError {
 }
 
 impl Client {
-    pub fn new(base_url: impl ToString, account_id: String, user_agent: &str) -> anyhow::Result<Self> {
+    pub fn new(base_url: impl ToString, account_id: AccountId, user_agent: &str) -> anyhow::Result<Self> {
         let mut base_url = base_url.to_string();
         if !base_url.ends_with('/') {
             base_url += "/"
