@@ -3,6 +3,8 @@ mod cache_wg_key;
 mod exit;
 mod exit2;
 mod lightning;
+mod newsletter_subscribe;
+mod newsletter_unsubscribe;
 mod prices;
 mod relay;
 mod stripe;
@@ -13,11 +15,14 @@ pub use cache_wg_key::*;
 pub use exit::*;
 pub use exit2::*;
 pub use lightning::*;
+pub use newsletter_subscribe::*;
+pub use newsletter_unsubscribe::*;
 pub use prices::*;
 pub use relay::*;
-use std::any::Any;
 pub use stripe::*;
 pub use tunnel::*;
+
+use std::any::Any;
 
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use thiserror::Error;
