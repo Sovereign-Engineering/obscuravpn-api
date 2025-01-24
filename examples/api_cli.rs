@@ -143,10 +143,10 @@ async fn main() -> anyhow::Result<()> {
         }
         Commands::TopUp { months } => {
             eprintln!("Creating top up invoice");
-            let LightningTopUpInfo { invoice } = client.run(CreateLightningTopUp { months }).await?;
-            println!("{}", &invoice);
-            let qr_code = QrCode::new(invoice)?.render::<qrcode::render::unicode::Dense1x2>().build();
-            eprintln!("{}", qr_code)
+            let info = client.run(CreateLightningTopUp { months }).await?;
+            println!("{}", serde_json::to_string_pretty(&info)?);
+            let qr_code = QrCode::new(info.invoice)?.render::<qrcode::render::unicode::Dense1x2>().build();
+            eprintln!("{}", qr_code);
         }
     };
 
