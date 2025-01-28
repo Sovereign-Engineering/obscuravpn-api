@@ -144,12 +144,19 @@ pub struct WgServerConfig {
     pub dnses: Vec<net::IpAddr>,
 }
 
+fn default_gateway_ip_v4() -> net::Ipv4Addr {
+    net::Ipv4Addr::new(10, 64, 0, 1)
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ObfuscatedTunnelConfig {
     pub client_pubkey: WgPubkey,
     pub client_ips_v4: Vec<ipnetwork::Ipv4Network>,
     pub client_ips_v6: Vec<ipnetwork::Ipv6Network>,
     pub dns: Vec<net::IpAddr>,
+    // TODO: remove after roll out in all environments
+    #[serde(default = "default_gateway_ip_v4")]
+    pub gateway_ip_v4: net::Ipv4Addr,
     pub relay_addr_v4: net::SocketAddrV4,
     pub relay_addr_v6: net::SocketAddrV6,
     pub relay_cert: String,
