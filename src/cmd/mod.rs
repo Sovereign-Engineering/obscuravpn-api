@@ -71,6 +71,7 @@ pub struct ApiErrorBody {
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub enum ApiErrorKind {
     AccountExpired {},
+    AlreadyExists {},
     BadRequest {},
     InternalError {},
     MissingOrInvalidAuthToken {},
