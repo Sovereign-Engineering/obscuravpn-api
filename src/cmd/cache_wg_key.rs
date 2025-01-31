@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct CacheWgKey {
     pub public_key: WgPubkey,
+    pub previous_public_keys: Vec<WgPubkey>,
 }
 
 impl Cmd for CacheWgKey {
