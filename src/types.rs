@@ -3,7 +3,9 @@ use std::str::FromStr;
 use std::{fmt, net};
 
 use ipnetwork;
-use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Serialize};
+use serde_with::base64::Base64;
+use serde_with::serde_as;
 use thiserror::Error;
 
 #[derive(Clone, PartialEq, Eq, Deserialize, Serialize)]
@@ -164,8 +166,10 @@ pub struct ObfuscatedTunnelConfig {
 }
 
 const WG_PUBKEY_LENGTH: usize = 32;
-#[derive(Deserialize, Clone, Eq, PartialEq)]
-pub struct WgPubkey(#[serde(deserialize_with = "deserialize_base64")] pub [u8; WG_PUBKEY_LENGTH]);
+
+#[serde_as]
+#[derive(Clone, Eq, PartialEq, Serialize, Deserialize)]
+pub struct WgPubkey(#[serde_as(as = "Base64")] pub [u8; WG_PUBKEY_LENGTH]);
 
 impl std::fmt::Debug for WgPubkey {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -196,30 +200,6 @@ impl Display for WgPubkey {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         use base64::{display::Base64Display, engine::general_purpose::STANDARD};
         Base64Display::new(&self.0, &STANDARD).fmt(f)
-    }
-}
-
-impl Serialize for WgPubkey {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_str(&self.to_string())
-    }
-}
-
-fn deserialize_base64<'de, D>(deserializer: D) -> Result<[u8; WG_PUBKEY_LENGTH], D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let encoded = String::deserialize(deserializer)?;
-    match WgPubkey::from_str(&encoded) {
-        Ok(pk) => Ok(pk.0),
-        Err(ParseWgPubkeyError::InvalidLength(n)) => {
-            let error_string = format!("a base64 string representing {} bytes", WG_PUBKEY_LENGTH);
-            Err(D::Error::invalid_length(n, &error_string.as_str()))
-        }
-        Err(ParseWgPubkeyError::NotBase64(err)) => Err(D::Error::custom(err)),
     }
 }
 
