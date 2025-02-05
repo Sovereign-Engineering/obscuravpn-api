@@ -22,7 +22,8 @@ fn test_json() {
     "id": "NYC-001",
     "ip_v4": "8.8.31.3",
     "ip_v6": "2001:db8:1234:ffff:ffff:ffff:ffff:ffff",
-    "preferred_exits": [{ "id": "nyc-wg-30" }]
+    "preferred_exits": [{ "id": "nyc-wg-30" }],
+    "tls_cert": "MIIBWjCCAQGgAwIBAgIVAK3WuHUPFg+mmBGiDhW9VNjDmudKMAoGCCqGSM49BAMCMCExHzAdBgNVBAMMFnJjZ2VuIHNlbGYgc2lnbmVkIGNlcnQwIBcNNzUwMTAxMDAwMDAwWhgPNDA5NjAxMDEwMDAwMDBaMCExHzAdBgNVBAMMFnJjZ2VuIHNlbGYgc2lnbmVkIGNlcnQwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAASLPcQhOgBGP8HRlGBy6rTO7SWnGgSuCEW6hi+Q/wnUr8H9FkJC7UGD9738XGKEq35ZKybrekr0DbK8YsVZ8SX+oxQwEjAQBgNVHREECTAHggVyZWxheTAKBggqhkjOPQQDAgNHADBEAiAYnVn/bozbp6u0iShFfUgbdGvAvf/hXwLhgonj+Fh+xAIgUgfQqvWFPbh3BNu98LhNFrESngTHtYYAOWt3wZdQOm4="
   }
     ]"#;
     crate::cmd::check_cmd_json::<ListRelays>(None, Some(output_json));

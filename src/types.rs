@@ -203,12 +203,15 @@ impl Display for WgPubkey {
     }
 }
 
+#[serde_as]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct OneRelay {
     pub id: String,
     pub ip_v4: net::Ipv4Addr,
     pub ip_v6: net::Ipv6Addr,
     pub preferred_exits: Vec<RelayPreferredExit>,
+    #[serde_as(as = "Base64")]
+    pub tls_cert: Vec<u8>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
