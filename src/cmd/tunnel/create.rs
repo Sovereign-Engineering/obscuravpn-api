@@ -69,7 +69,9 @@ fn test_json() {
         "id": "NYC-001",
         "country_code": "US",
         "city_code": "nyc",
-        "city_name": "New York"
+        "city_name": "New York",
+        "provider_id": "us-nyc-wg-301",
+        "provider_url": "https://mullvad.net/servers"
       }
     }
     "#;
