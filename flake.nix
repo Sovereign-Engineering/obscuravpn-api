@@ -2,7 +2,7 @@
   inputs = {
     crane.url = "github:ipetkov/crane";
     flake-utils.url = "github:numtide/flake-utils";
-    nixpkgs.url = "nixpkgs/nixos-24.05";
+    nixpkgs.url = "nixpkgs/nixos-24.11";
   };
 
   outputs = { self, crane, nixpkgs, flake-utils }:
