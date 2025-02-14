@@ -232,6 +232,8 @@ pub struct OneExit {
     pub country_code: String,
     pub city_code: String,
     pub city_name: String,
+    pub provider_id: String,
+    pub provider_url: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
