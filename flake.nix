@@ -16,7 +16,6 @@
           strictDeps = true;
         };
         cargoArgs = depsArgs // { cargoArtifacts = craneLib.buildDepsOnly depsArgs; };
-        obscuraApi = craneLib.buildPackage cargoArgs;
       in {
         checks = {
           actionlint = pkgs.runCommand "actionlint" { nativeBuildInputs = [ pkgs.actionlint ]; } ''
@@ -24,7 +23,7 @@
             touch "$out"
           '';
 
-          build = obscuraApi;
+          build = craneLib.buildPackage (cargoArgs // { cargoExtraArgs = "--all-features"; });
 
           clippy = craneLib.cargoClippy
             (cargoArgs // { cargoClippyExtraArgs = "--all-features --all-targets -- -Dwarnings"; });

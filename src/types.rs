@@ -159,8 +159,14 @@ pub struct ObfuscatedTunnelConfig {
     // TODO: remove after roll out in all environments
     #[serde(default = "default_gateway_ip_v4")]
     pub gateway_ip_v4: net::Ipv4Addr,
+    // TODO: Remove. https://linear.app/soveng/issue/OBS-1267
+    #[cfg(feature = "server")]
     pub relay_addr_v4: net::SocketAddrV4,
+    // TODO: Remove. https://linear.app/soveng/issue/OBS-1267
+    #[cfg(feature = "server")]
     pub relay_addr_v6: net::SocketAddrV6,
+    // TODO: Remove. https://linear.app/soveng/issue/OBS-1267
+    #[cfg(feature = "server")]
     pub relay_cert: String,
     pub exit_pubkey: WgPubkey,
 }
@@ -212,6 +218,7 @@ pub struct OneRelay {
     pub preferred_exits: Vec<RelayPreferredExit>,
     #[serde_as(as = "Base64")]
     pub tls_cert: Vec<u8>,
+    pub ports: Vec<u16>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]

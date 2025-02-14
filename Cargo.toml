@@ -26,8 +26,9 @@ url = "2"
 uuid = { version = "1.11.0", features = ["v4", "serde"] }
 
 [features]
-client = ["reqwest"]
 default = ["client"]
+client = ["reqwest"]
+server = []
 
 [dev-dependencies]
 clap = { version = "4.4.11", features = ["derive"] }

@@ -62,7 +62,8 @@ fn test_json() {
         "ip_v4": "8.8.31.3",
         "ip_v6": "2001:db8:1234:ffff:ffff:ffff:ffff:ffff",
         "preferred_exits": [{ "id": "nyc-wg-30" }],
-        "tls_cert": "MIIBWjCCAQGgAwIBAgIVAK3WuHUPFg+mmBGiDhW9VNjDmudKMAoGCCqGSM49BAMCMCExHzAdBgNVBAMMFnJjZ2VuIHNlbGYgc2lnbmVkIGNlcnQwIBcNNzUwMTAxMDAwMDAwWhgPNDA5NjAxMDEwMDAwMDBaMCExHzAdBgNVBAMMFnJjZ2VuIHNlbGYgc2lnbmVkIGNlcnQwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAASLPcQhOgBGP8HRlGBy6rTO7SWnGgSuCEW6hi+Q/wnUr8H9FkJC7UGD9738XGKEq35ZKybrekr0DbK8YsVZ8SX+oxQwEjAQBgNVHREECTAHggVyZWxheTAKBggqhkjOPQQDAgNHADBEAiAYnVn/bozbp6u0iShFfUgbdGvAvf/hXwLhgonj+Fh+xAIgUgfQqvWFPbh3BNu98LhNFrESngTHtYYAOWt3wZdQOm4="
+        "tls_cert": "MIIBWjCCAQGgAwIBAgIVAK3WuHUPFg+mmBGiDhW9VNjDmudKMAoGCCqGSM49BAMCMCExHzAdBgNVBAMMFnJjZ2VuIHNlbGYgc2lnbmVkIGNlcnQwIBcNNzUwMTAxMDAwMDAwWhgPNDA5NjAxMDEwMDAwMDBaMCExHzAdBgNVBAMMFnJjZ2VuIHNlbGYgc2lnbmVkIGNlcnQwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAASLPcQhOgBGP8HRlGBy6rTO7SWnGgSuCEW6hi+Q/wnUr8H9FkJC7UGD9738XGKEq35ZKybrekr0DbK8YsVZ8SX+oxQwEjAQBgNVHREECTAHggVyZWxheTAKBggqhkjOPQQDAgNHADBEAiAYnVn/bozbp6u0iShFfUgbdGvAvf/hXwLhgonj+Fh+xAIgUgfQqvWFPbh3BNu98LhNFrESngTHtYYAOWt3wZdQOm4=",
+        "ports": [53, 443]
       },
       "exit": {
         "id": "NYC-001",
