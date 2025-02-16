@@ -10,6 +10,8 @@ pub mod wg_conf;
 mod client;
 #[cfg(feature = "client")]
 pub mod notices;
+pub mod relay_protocol;
+
 #[cfg(feature = "client")]
 pub use client::Client;
 #[cfg(feature = "client")]
