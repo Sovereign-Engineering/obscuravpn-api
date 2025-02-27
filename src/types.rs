@@ -213,12 +213,23 @@ impl Display for WgPubkey {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct OneRelay {
     pub id: String,
-    pub ip_v4: net::Ipv4Addr,
-    pub ip_v6: net::Ipv6Addr,
     pub preferred_exits: Vec<RelayPreferredExit>,
+
+    /// Unused. Set for compatibility with old clients.
+    ///
+    /// https://linear.app/soveng/issue/OBS-1318
+    #[cfg(feature = "server")]
+    #[serde(default = "localhost_ip_v6")]
+    pub ip_v6: net::Ipv6Addr,
+
+    /// The IPv4 address where the QUIC API is available.
+    ///
+    /// The API is available on all of the ports listed in `ports`.
+    pub ip_v4: net::Ipv4Addr,
+    pub ports: Vec<u16>,
+    /// The TLS cert for the QUIC API.
     #[serde_as(as = "Base64")]
     pub tls_cert: Vec<u8>,
-    pub ports: Vec<u16>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
@@ -313,4 +324,8 @@ impl From<AuthToken> for String {
     fn from(value: AuthToken) -> Self {
         value.0
     }
+}
+
+fn localhost_ip_v6() -> net::Ipv6Addr {
+    net::Ipv6Addr::LOCALHOST
 }
