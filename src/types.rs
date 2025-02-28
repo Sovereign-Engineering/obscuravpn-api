@@ -243,8 +243,14 @@ pub struct OneExit {
     pub country_code: String,
     pub city_code: String,
     pub city_name: String,
+    /// The provider's ID for this server.
     pub provider_id: String,
+    /// A URL for this server on the provider's site.
     pub provider_url: String,
+    /// The name of the provider for this sever.
+    pub provider_name: String,
+    /// The homepage of the provider of this server.
+    pub provider_homepage_url: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
