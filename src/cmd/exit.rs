@@ -25,7 +25,9 @@ fn test_json() {
         "city_code": "nyc",
         "city_name": "New York",
         "provider_id": "us-nyc-wg-301",
-        "provider_url": "https://mullvad.net/servers"
+        "provider_url": "https://mullvad.net/servers",
+        "provider_name": "Mullvad VPN",
+        "provider_homepage_url": "https://mullvad.net"
       }
     ]
     "#;
