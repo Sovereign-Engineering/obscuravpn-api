@@ -174,7 +174,7 @@ pub struct ObfuscatedTunnelConfig {
 const WG_PUBKEY_LENGTH: usize = 32;
 
 #[serde_as]
-#[derive(Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct WgPubkey(#[serde_as(as = "Base64")] pub [u8; WG_PUBKEY_LENGTH]);
 
 impl std::fmt::Debug for WgPubkey {
