@@ -23,6 +23,11 @@ pub enum IpType {
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct CheckResult {
+    /// The request suggested that additional proxies may be in use.
+    ///
+    /// This means that we can't reliably determine if the user is using Obscura.
+    pub additional_proxies: bool,
+
     /// The user is using an exit that may be Obscura traffic.
     ///
     /// Either way the user is not coming from an unknown IP range.
@@ -43,18 +48,20 @@ impl Check {
 fn check_err_json() {
     assert_eq!(
         serde_json::to_string(&CheckResult {
+            additional_proxies: false,
             is_safe: true,
             ip: "10.0.1.2".into(),
             ip_type: IpType::Mullvad
         })
         .unwrap(),
-        r#"{"is_safe":true,"ip":"10.0.1.2","ip_type":"Mullvad"}"#,
+        r#"{"additional_proxies":false,"is_safe":true,"ip":"10.0.1.2","ip_type":"Mullvad"}"#,
     );
 
     assert_eq!(
         serde_json::from_str::<CheckResult>(
             r#"
             {
+                "additional_proxies": true,
                 "is_safe": false,
                 "ip": "10.9.8.7",
                 "ip_type": "Unknown"
@@ -63,6 +70,7 @@ fn check_err_json() {
         )
         .unwrap(),
         CheckResult {
+            additional_proxies: true,
             is_safe: false,
             ip: "10.9.8.7".into(),
             ip_type: IpType::Unknown
@@ -73,6 +81,7 @@ fn check_err_json() {
         serde_json::from_str::<CheckResult>(
             r#"
             {
+                "additional_proxies": false,
                 "is_safe": false,
                 "ip": "127.0.0.1",
                 "ip_type": "NewValue"
@@ -81,6 +90,7 @@ fn check_err_json() {
         )
         .unwrap(),
         CheckResult {
+            additional_proxies: false,
             is_safe: false,
             ip: "127.0.0.1".into(),
             ip_type: IpType::Other
