@@ -27,6 +27,8 @@ enum Commands {
     ListTunnels,
     ListRelays,
     CreateObfuscatedTunnel {
+        #[clap(long)]
+        label: Option<String>,
         /// use specific relay
         #[clap(long)]
         relay: Option<String>,
@@ -35,6 +37,8 @@ enum Commands {
         exit: Option<String>,
     },
     CreateStaticTunnel {
+        #[clap(long)]
+        label: Option<String>,
         /// print WireGuard configuration to stdout (JSON to stderr)
         #[clap(long)]
         wg_conf: bool,
@@ -81,7 +85,7 @@ async fn main() -> anyhow::Result<()> {
             let tunnels = client.run(ListTunnels {}).await?;
             println!("{:#?}", tunnels);
         }
-        Commands::CreateObfuscatedTunnel { relay, exit } => {
+        Commands::CreateObfuscatedTunnel { label, relay, exit } => {
             eprintln!("Creating new tunnel");
             let sk = StaticSecret::random_from_rng(OsRng);
             eprintln!("Created private key");
@@ -91,6 +95,7 @@ async fn main() -> anyhow::Result<()> {
             let tunnel = client
                 .run(CreateTunnel::Obfuscated {
                     id: None,
+                    label,
                     wg_pubkey,
                     relay,
                     exit,
@@ -100,7 +105,7 @@ async fn main() -> anyhow::Result<()> {
             eprintln!("Created tunnel {}", &tunnel.id);
             println!("{}", serde_json::to_string_pretty(&tunnel)?);
         }
-        Commands::CreateStaticTunnel { wg_conf, relay, exit } => {
+        Commands::CreateStaticTunnel { label, wg_conf, relay, exit } => {
             eprintln!("Creating new tunnel");
             let sk = StaticSecret::random_from_rng(OsRng);
             let pk = PublicKey::from(&sk);
@@ -113,6 +118,7 @@ async fn main() -> anyhow::Result<()> {
             let tunnel = client
                 .run(CreateTunnel::UdpPort {
                     id: None,
+                    label,
                     wg_pubkey,
                     relay,
                     exit,
