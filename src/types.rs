@@ -226,6 +226,11 @@ impl Display for WgPubkey {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct OneRelay {
     pub id: String,
+
+    pub country_code: String,
+    pub city_code: String,
+    pub city_name: String,
+
     pub preferred_exits: Vec<RelayPreferredExit>,
 
     /// Unused. Set for compatibility with old clients.

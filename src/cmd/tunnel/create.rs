@@ -62,6 +62,9 @@ fn test_json() {
       },
       "relay": {
         "id": "NYC-001",
+        "country_code": "US",
+        "city_code": "nyc",
+        "city_name": "New York",
         "ip_v4": "8.8.31.3",
         "ip_v6": "2001:db8:1234:ffff:ffff:ffff:ffff:ffff",
         "preferred_exits": [{ "id": "nyc-wg-30" }],
@@ -117,6 +120,9 @@ fn test_json_named() {
       },
       "relay": {
         "id": "NYC-001",
+        "country_code": "US",
+        "city_code": "nyc",
+        "city_name": "New York",
         "ip_v4": "8.8.31.3",
         "ip_v6": "2001:db8:1234:ffff:ffff:ffff:ffff:ffff",
         "preferred_exits": [{ "id": "nyc-wg-30" }],
