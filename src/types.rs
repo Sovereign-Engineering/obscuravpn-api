@@ -95,9 +95,22 @@ impl Subscription {
     }
 }
 
+/// The maximum length that a tunnel label can be set to.
+///
+/// Clients should not assume anything about labels that they receive, except that they can comfortably fit in memory on basically any modern device.
+pub const TUNNEL_LABEL_MAX_BYTES: usize = 128;
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct OneTunnel {
     pub id: String,
+
+    /// A user-provided label for the tunnel.
+    ///
+    /// If None, the user did not provide a label and the client should show some nice representation of this, for example the ID and last active time.
+    ///
+    /// The string itself will never be empty (0 bytes) but clients may wish consider cases such as all whitespace.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub label: Option<String>,
     pub status: TunnelStatus,
     pub config: TunnelConfig,
     pub relay: OneRelay,
