@@ -33,6 +33,9 @@ fn test_json() {
       },
       "relay": {
         "id": "NYC-001",
+        "country_code": "CA",
+        "city_code": "yyz",
+        "city_name": "Toronto",
         "ip_v4": "8.8.31.3",
         "ip_v6": "2001:db8:1234:ffff:ffff:ffff:ffff:ffff",
         "preferred_exits": [{ "id": "nyc-wg-30" }],
