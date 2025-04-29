@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::types::OneRelay;
+use crate::{cmd::ETagCmd, types::OneRelay};
 
 use super::Cmd;
 
@@ -14,6 +14,8 @@ impl Cmd for ListRelays {
     const METHOD: http::Method = http::Method::GET;
     const PATH: &'static str = RELAYS_PATH;
 }
+
+impl ETagCmd for ListRelays {}
 
 #[test]
 fn test_json() {

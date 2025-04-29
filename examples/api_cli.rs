@@ -23,7 +23,10 @@ struct Args {
 
 #[derive(Subcommand, Debug, PartialEq)]
 enum Commands {
-    ListExits,
+    ListExits {
+        #[clap(long)]
+        etag: Option<String>,
+    },
     ListTunnels,
     ListRelays,
     CreateObfuscatedTunnel {
@@ -75,10 +78,15 @@ async fn main() -> anyhow::Result<()> {
             let relays = client.run(ListRelays {}).await?;
             println!("{}", serde_json::to_string_pretty(&relays)?);
         }
-        Commands::ListExits => {
+        Commands::ListExits { etag } => {
             eprintln!("Get all exits");
-            let exits = client.run(ListExits2 {}).await?.exits;
-            println!("{:#?}", exits);
+            let etag = etag.as_ref().map(|e| e.as_bytes());
+            let exits = client.run_with_etag(ListExits2 {}, etag).await?;
+            println!("ETag: {:?}", exits.etag().map(String::from_utf8_lossy));
+            match exits.into_body() {
+                Some(r) => println!("{:#?}", r.exits),
+                None => eprintln!("Not Modified"),
+            }
         }
         Commands::ListTunnels => {
             eprintln!("Get all existing tunnels");

@@ -1,5 +1,5 @@
 use super::Cmd;
-use crate::types::Prices;
+use crate::{cmd::ETagCmd, types::Prices};
 use serde::{Deserialize, Serialize};
 
 const PRICES_PATH: &str = "prices";
@@ -12,6 +12,8 @@ impl Cmd for ListPrices {
     const METHOD: http::Method = http::Method::GET;
     const PATH: &'static str = PRICES_PATH;
 }
+
+impl ETagCmd for ListPrices {}
 
 #[test]
 fn test_json() {
