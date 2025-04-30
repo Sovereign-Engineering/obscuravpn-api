@@ -142,7 +142,7 @@ pub async fn parse_response<T: 'static + DeserializeOwned>(res: reqwest::Respons
             })?,
         }));
     } else {
-        let empty: Box<dyn Any> = Box::new(());
+        let empty: Box<dyn Any + Send + Sync> = Box::new(());
         Some(if let Ok(empty) = empty.downcast::<T>() {
             *empty
         } else {
