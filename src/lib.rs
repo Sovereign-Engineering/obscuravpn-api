@@ -18,3 +18,5 @@ mod response;
 pub use client::Client;
 #[cfg(feature = "client")]
 pub use client::ClientError;
+#[cfg(feature = "client")]
+pub use response::Response;
