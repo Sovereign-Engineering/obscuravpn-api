@@ -11,6 +11,8 @@ mod client;
 #[cfg(feature = "client")]
 pub mod notices;
 pub mod relay_protocol;
+#[cfg(feature = "client")]
+mod response;
 
 #[cfg(feature = "client")]
 pub use client::Client;

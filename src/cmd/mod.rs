@@ -14,6 +14,8 @@ pub use account::*;
 pub use cache_wg_key::*;
 pub use exit::*;
 pub use exit2::*;
+use http::HeaderValue;
+use http::StatusCode;
 pub use lightning::*;
 pub use newsletter_subscribe::*;
 pub use newsletter_unsubscribe::*;
@@ -28,6 +30,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use thiserror::Error;
 use url::Url;
 
+use crate::response::Response;
 use crate::types::AuthToken;
 use crate::ClientError;
 
@@ -36,7 +39,7 @@ pub trait Cmd: Serialize + DeserializeOwned + std::fmt::Debug {
     const METHOD: http::Method;
     const PATH: &'static str;
 
-    fn to_request(&self, base_url: impl AsRef<str>, auth_token: &AuthToken) -> anyhow::Result<http::Request<String>> {
+    fn to_request(&self, base_url: impl AsRef<str>, auth_token: &AuthToken, etag: Option<HeaderValue>) -> anyhow::Result<http::Request<String>> {
         let url = Url::parse(base_url.as_ref())?.join(Self::PATH)?;
         let mut request = http::Request::builder()
             .method(Self::METHOD)
@@ -44,12 +47,17 @@ pub trait Cmd: Serialize + DeserializeOwned + std::fmt::Debug {
             .header(http::header::AUTHORIZATION, format!("Bearer {}", auth_token.as_str()))
             .header(http::header::CONTENT_TYPE, "application/json")
             .body(String::new())?;
+        if let Some(etag) = etag {
+            request.headers_mut().insert(http::header::IF_NONE_MATCH, etag);
+        }
         if Self::METHOD != http::Method::GET {
             *request.body_mut() = serde_json::to_string(self)?;
         }
         Ok(request)
     }
 }
+
+pub trait ETagCmd: Cmd {}
 
 #[derive(Clone, Debug, Error)]
 #[error("{}", self.body.msg)]
@@ -95,7 +103,7 @@ pub struct ProtocolError {
     pub source: anyhow::Error,
 }
 
-pub async fn parse_response<T: 'static + DeserializeOwned>(res: reqwest::Response) -> Result<T, ClientError> {
+pub async fn parse_response<T: 'static + DeserializeOwned>(res: reqwest::Response) -> Result<Response<T>, ClientError> {
     let is_json = res
         .headers()
         .get(http::header::CONTENT_TYPE)
@@ -116,8 +124,13 @@ pub async fn parse_response<T: 'static + DeserializeOwned>(res: reqwest::Respons
         };
     }
 
+    let etag = res.headers().get(http::header::ETAG).cloned();
+
     let status = res.status();
-    if !status.is_success() {
+
+    let body = if status == StatusCode::NOT_MODIFIED {
+        None
+    } else if !status.is_success() {
         return Err(ClientError::ApiError(ApiError {
             status,
             body: res.json().await.map_err(|err| {
@@ -128,12 +141,16 @@ pub async fn parse_response<T: 'static + DeserializeOwned>(res: reqwest::Respons
                 })
             })?,
         }));
-    }
-    let empty: Box<dyn Any> = Box::new(());
-    if let Ok(empty) = empty.downcast::<T>() {
-        return Ok(*empty);
-    }
-    Ok(res.json().await.map_err(anyhow::Error::new)?)
+    } else {
+        let empty: Box<dyn Any> = Box::new(());
+        Some(if let Ok(empty) = empty.downcast::<T>() {
+            *empty
+        } else {
+            res.json().await.map_err(anyhow::Error::new)?
+        })
+    };
+
+    Ok(Response::new(body, etag))
 }
 
 #[cfg(test)]

@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::types::OneExit;
+use crate::{cmd::ETagCmd, types::OneExit};
 
 use super::Cmd;
 
@@ -19,6 +19,8 @@ impl Cmd for ListExits2 {
     const METHOD: http::Method = http::Method::GET;
     const PATH: &'static str = EXITS_PATH;
 }
+
+impl ETagCmd for ListExits2 {}
 
 #[test]
 fn test_json() {
