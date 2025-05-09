@@ -227,8 +227,8 @@ impl Display for WgPubkey {
 pub struct OneRelay {
     pub id: String,
 
-    pub country_code: String,
-    pub city_code: String,
+    #[serde(flatten)]
+    pub city_code: CityCode,
     pub city_name: String,
 
     pub preferred_exits: Vec<RelayPreferredExit>,
@@ -258,8 +258,8 @@ pub struct RelayPreferredExit {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct OneExit {
     pub id: String,
-    pub country_code: String,
-    pub city_code: String,
+    #[serde(flatten)]
+    pub city_code: CityCode,
     pub city_name: String,
     /// The provider's ID for this server.
     pub provider_id: String,
@@ -275,6 +275,15 @@ pub struct OneExit {
     /// Lower tier servers should be preferred.
     #[serde(default = "u8::max_value")]
     pub tier: u8,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Hash)]
+pub struct CountryCode(pub String);
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Hash)]
+pub struct CityCode {
+    pub country_code: CountryCode,
+    pub city_code: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
