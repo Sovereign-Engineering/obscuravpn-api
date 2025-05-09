@@ -269,6 +269,12 @@ pub struct OneExit {
     pub provider_name: String,
     /// The homepage of the provider of this server.
     pub provider_homepage_url: String,
+    /// ID of the datacenter server is located at.
+    #[serde(default = "rand::random")]
+    pub datacenter_id: u32,
+    /// Lower tier servers should be preferred.
+    #[serde(default = "u8::max_value")]
+    pub tier: u8,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

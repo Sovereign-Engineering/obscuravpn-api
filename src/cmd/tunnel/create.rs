@@ -76,10 +76,12 @@ fn test_json() {
         "country_code": "US",
         "city_code": "nyc",
         "city_name": "New York",
+        "datacenter_id": 42,
         "provider_id": "us-nyc-wg-301",
         "provider_url": "https://mullvad.net/servers",
         "provider_name": "Mullvad VPN",
-        "provider_homepage_url": "https://mullvad.net"
+        "provider_homepage_url": "https://mullvad.net",
+        "tier": 0
       }
     }
     "#;
@@ -134,10 +136,12 @@ fn test_json_named() {
         "country_code": "US",
         "city_code": "nyc",
         "city_name": "New York",
+        "datacenter_id": 42,
         "provider_id": "us-nyc-wg-301",
         "provider_url": "https://mullvad.net/servers",
         "provider_name": "Mullvad VPN",
-        "provider_homepage_url": "https://mullvad.net"
+        "provider_homepage_url": "https://mullvad.net",
+        "tier": 0
       }
     }
     "#;
