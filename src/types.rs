@@ -2,6 +2,7 @@ use std::fmt::{Debug, Display, Formatter};
 use std::str::FromStr;
 use std::{fmt, net};
 
+use base64::prelude::*;
 use ipnetwork;
 use serde::{Deserialize, Serialize};
 use serde_with::base64::Base64;
@@ -223,7 +224,7 @@ impl Display for WgPubkey {
 }
 
 #[serde_as]
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Clone, derive_more::Debug, PartialEq, Eq)]
 pub struct OneRelay {
     pub id: String,
 
@@ -246,6 +247,7 @@ pub struct OneRelay {
     pub ip_v4: net::Ipv4Addr,
     pub ports: Vec<u16>,
     /// The TLS cert for the QUIC API.
+    #[debug("{:?}", BASE64_STANDARD.encode(tls_cert))]
     #[serde_as(as = "Base64")]
     pub tls_cert: Vec<u8>,
 }
