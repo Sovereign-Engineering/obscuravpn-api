@@ -11,6 +11,7 @@ repository = "https://github.com/Sovereign-Engineering/obscuravpn-api"
 [dependencies]
 anyhow = "1"
 base64 = "0.21"
+derive_more = {  version = "2.0.1", features = ["full"] }
 http = { version = "1" }
 ipnetwork = "0.16"
 itertools = "0.12.0"
