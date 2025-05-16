@@ -1,4 +1,5 @@
 #![allow(clippy::redundant_closure)]
+extern crate core;
 
 pub mod check;
 pub mod cmd;
