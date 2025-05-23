@@ -146,7 +146,7 @@ pub async fn parse_response<T: 'static + DeserializeOwned>(res: reqwest::Respons
         Some(if let Ok(empty) = empty.downcast::<T>() {
             *empty
         } else {
-            res.json().await.map_err(anyhow::Error::new)?
+            res.json().await.map_err(ClientError::JsonError)?
         })
     };
 

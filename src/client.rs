@@ -2,7 +2,7 @@ use crate::cmd::{parse_response, ApiError, ApiErrorKind, Cmd, ETagCmd, ProtocolE
 use crate::response::Response;
 use crate::token::AcquireToken;
 use crate::types::{AccountId, AuthToken};
-use anyhow::{anyhow, Context};
+use anyhow::Context;
 use http::HeaderValue;
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -27,8 +27,22 @@ pub enum ClientError {
     /// Most likely a response from a proxy or similar.
     #[error("Protocol Error: {0}")]
     ProtocolError(#[from] ProtocolError),
-    #[error("request processing error: {:?}", .0)]
-    Other(#[from] anyhow::Error),
+    #[error("failed to build request: {0}")]
+    ToRequestError(#[from] anyhow::Error),
+    #[error("no auth token in response")]
+    MissingAuthToken,
+    #[error("could not construct request: {0}")]
+    InvalidRequest(#[source] reqwest::Error),
+    #[error("request processing error: {0}")]
+    RequestExecError(#[source] reqwest::Error),
+    #[error("failed to decode JSON: {0}")]
+    JsonError(#[source] reqwest::Error),
+    #[error("invalid header value")]
+    InvalidHeaderValue,
+    #[error("non-conditional request has no body")]
+    MissingBody,
+    #[error("repeatedly acquired invalid auth token")]
+    RepeatedInvalidAuth,
 }
 
 impl Client {
@@ -72,7 +86,7 @@ impl Client {
         let request = AcquireToken { account_id }.to_request(&self.base_url)?;
         let res = self.send_http(request).await?;
         let res = parse_response::<String>(res).await?;
-        let auth_token: AuthToken = res.into_body().context("No auth token in response")?.into();
+        let auth_token: AuthToken = res.into_body().ok_or(ClientError::MissingAuthToken)?.into();
         self.set_auth_token(Some(auth_token.clone()));
 
         drop(acquiring_auth_token);
@@ -87,17 +101,13 @@ impl Client {
         *self.cached_auth_token.lock().unwrap() = token
     }
 
-    async fn send_http(&self, request: http::Request<String>) -> anyhow::Result<reqwest::Response> {
-        let request = request.try_into().context("could not construct reqwest::Request")?;
-        self.http.execute(request).await.context("error executing request")
+    async fn send_http(&self, request: http::Request<String>) -> Result<reqwest::Response, ClientError> {
+        let request = request.try_into().map_err(ClientError::InvalidRequest)?;
+        self.http.execute(request).await.map_err(ClientError::RequestExecError)
     }
 
     pub async fn run<C: Cmd>(&self, cmd: C) -> Result<C::Output, ClientError> {
-        let r = self.run_impl(cmd, None).await?;
-        let Some(body) = r.into_body() else {
-            return Err(anyhow::Error::msg("Non-conditional request has no body.").into());
-        };
-        Ok(body)
+        self.run_impl(cmd, None).await?.into_body().ok_or(ClientError::MissingBody)
     }
 
     pub async fn run_with_etag<C: ETagCmd>(&self, cmd: C, etag: Option<&[u8]>) -> Result<Response<C::Output>, ClientError> {
@@ -105,7 +115,10 @@ impl Client {
     }
 
     async fn run_impl<C: Cmd>(&self, cmd: C, etag: Option<&[u8]>) -> Result<Response<C::Output>, ClientError> {
-        let etag = etag.map(HeaderValue::from_bytes).transpose().map_err(anyhow::Error::new)?;
+        let etag = etag
+            .map(HeaderValue::from_bytes)
+            .transpose()
+            .map_err(|_| ClientError::InvalidHeaderValue)?;
         for _ in 0..3 {
             let auth_token = self.acquire_auth_token().await?;
             if let Some(output) = self.run_once::<C>(&cmd, &auth_token, etag.clone()).await? {
@@ -113,8 +126,7 @@ impl Client {
             }
             self.clear_auth_token(auth_token);
         }
-
-        Err(anyhow!("repeatedly acquired invalid auth token").into())
+        Err(ClientError::RepeatedInvalidAuth)
     }
 
     // Sends the http request and maps expected error codes to client errors.
