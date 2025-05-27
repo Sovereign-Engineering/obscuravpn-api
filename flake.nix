@@ -19,7 +19,7 @@
       in {
         checks = {
           actionlint = pkgs.runCommand "actionlint" { nativeBuildInputs = [ pkgs.actionlint ]; } ''
-            actionlint ${./.github}/**/*.yml
+            actionlint -config-file ${./.github}/actionlint.yml ${./.github}/**/*.yml
             touch "$out"
           '';
 
