@@ -22,6 +22,10 @@ pub struct Client {
 pub enum ClientError {
     #[error("API Error: {0}")]
     ApiError(#[from] ApiError),
+    #[error("invalid header value")]
+    InvalidHeaderValue,
+    #[error("request processing error: {0}")]
+    Other(#[from] anyhow::Error),
     /// We got a response but it wasn't the expected format.
     ///
     /// Most likely a response from a proxy or similar.
@@ -29,10 +33,6 @@ pub enum ClientError {
     ProtocolError(#[from] ProtocolError),
     #[error("error executing request: {0}")]
     RequestExecError(#[source] reqwest::Error),
-    #[error("invalid header value")]
-    InvalidHeaderValue,
-    #[error("request processing error: {0}")]
-    Other(#[from] anyhow::Error),
 }
 
 impl Client {
