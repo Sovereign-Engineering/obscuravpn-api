@@ -1,0 +1,5 @@
+self-hosted-runner:
+  labels:
+    - nscloud-ubuntu-20.04-amd64-8x8-with-cache
+    - nscloud-cache-tag-obscuravpn-api
+    - nscloud-cache-size-20gb
