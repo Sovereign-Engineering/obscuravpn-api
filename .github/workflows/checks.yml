@@ -13,7 +13,7 @@ jobs:
   build_all:
     name: Build All
     runs-on:
-            # https://namespace.so/docs/features/faster-github-actions#using-runner-labels
+      # https://namespace.so/docs/features/faster-github-actions#using-runner-labels
       - nscloud-ubuntu-20.04-amd64-8x8-with-cache
       - nscloud-cache-tag-obscuravpn-api
       - nscloud-cache-size-20gb
