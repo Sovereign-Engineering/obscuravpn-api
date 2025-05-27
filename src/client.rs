@@ -22,13 +22,17 @@ pub struct Client {
 pub enum ClientError {
     #[error("API Error: {0}")]
     ApiError(#[from] ApiError),
+    #[error("invalid header value")]
+    InvalidHeaderValue,
+    #[error("request processing error: {0}")]
+    Other(#[from] anyhow::Error),
     /// We got a response but it wasn't the expected format.
     ///
     /// Most likely a response from a proxy or similar.
     #[error("Protocol Error: {0}")]
     ProtocolError(#[from] ProtocolError),
-    #[error("request processing error: {:?}", .0)]
-    Other(#[from] anyhow::Error),
+    #[error("error executing request: {0}")]
+    RequestExecError(#[from] reqwest::Error),
 }
 
 impl Client {
@@ -87,17 +91,16 @@ impl Client {
         *self.cached_auth_token.lock().unwrap() = token
     }
 
-    async fn send_http(&self, request: http::Request<String>) -> anyhow::Result<reqwest::Response> {
+    async fn send_http(&self, request: http::Request<String>) -> Result<reqwest::Response, ClientError> {
         let request = request.try_into().context("could not construct reqwest::Request")?;
-        self.http.execute(request).await.context("error executing request")
+        self.http.execute(request).await.map_err(Into::into)
     }
 
     pub async fn run<C: Cmd>(&self, cmd: C) -> Result<C::Output, ClientError> {
-        let r = self.run_impl(cmd, None).await?;
-        let Some(body) = r.into_body() else {
-            return Err(anyhow::Error::msg("Non-conditional request has no body.").into());
-        };
-        Ok(body)
+        self.run_impl(cmd, None)
+            .await?
+            .into_body()
+            .ok_or(anyhow::Error::msg("Non-conditional request has no body.").into())
     }
 
     pub async fn run_with_etag<C: ETagCmd>(&self, cmd: C, etag: Option<&[u8]>) -> Result<Response<C::Output>, ClientError> {
@@ -105,7 +108,10 @@ impl Client {
     }
 
     async fn run_impl<C: Cmd>(&self, cmd: C, etag: Option<&[u8]>) -> Result<Response<C::Output>, ClientError> {
-        let etag = etag.map(HeaderValue::from_bytes).transpose().map_err(anyhow::Error::new)?;
+        let etag = etag
+            .map(HeaderValue::from_bytes)
+            .transpose()
+            .map_err(|_| ClientError::InvalidHeaderValue)?;
         for _ in 0..3 {
             let auth_token = self.acquire_auth_token().await?;
             if let Some(output) = self.run_once::<C>(&cmd, &auth_token, etag.clone()).await? {
@@ -113,7 +119,6 @@ impl Client {
             }
             self.clear_auth_token(auth_token);
         }
-
         Err(anyhow!("repeatedly acquired invalid auth token").into())
     }
 
