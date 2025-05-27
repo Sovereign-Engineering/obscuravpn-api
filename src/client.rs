@@ -32,7 +32,7 @@ pub enum ClientError {
     #[error("Protocol Error: {0}")]
     ProtocolError(#[from] ProtocolError),
     #[error("error executing request: {0}")]
-    RequestExecError(#[source] reqwest::Error),
+    RequestExecError(#[from] reqwest::Error),
 }
 
 impl Client {
@@ -93,7 +93,7 @@ impl Client {
 
     async fn send_http(&self, request: http::Request<String>) -> Result<reqwest::Response, ClientError> {
         let request = request.try_into().context("could not construct reqwest::Request")?;
-        self.http.execute(request).await.map_err(ClientError::RequestExecError)
+        self.http.execute(request).await.map_err(Into::into)
     }
 
     pub async fn run<C: Cmd>(&self, cmd: C) -> Result<C::Output, ClientError> {
