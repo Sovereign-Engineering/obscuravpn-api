@@ -4,6 +4,7 @@ use crate::token::AcquireToken;
 use crate::types::{AccountId, AuthToken};
 use anyhow::{anyhow, Context};
 use http::HeaderValue;
+use reqwest::ClientBuilder;
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::time::Duration;
@@ -14,6 +15,7 @@ pub struct Client {
     account_id: AccountId,
     base_url: String,
     http: reqwest::Client,
+    http_no_sni: reqwest::Client,
     cached_auth_token: Arc<Mutex<Option<AuthToken>>>,
     acquiring_auth_token: tokio::sync::Mutex<()>,
 }
@@ -41,18 +43,29 @@ impl Client {
         if !base_url.ends_with('/') {
             base_url += "/"
         }
+        let http = Self::http_client_builder(user_agent)
+            .build()
+            .context("failed to initialize HTTP client")?;
+        let http_no_sni = Self::http_client_builder(user_agent)
+            .tls_sni(false)
+            .build()
+            .context("failed to initialize no-sni HTTP client")?;
+
         Ok(Self {
             account_id,
             base_url,
             cached_auth_token: Arc::new(Mutex::new(None)),
-            http: reqwest::Client::builder()
-                .timeout(Duration::from_secs(60))
-                .read_timeout(Duration::from_secs(10))
-                .user_agent(user_agent)
-                .build()
-                .context("failed to initialize HTTP client")?,
+            http,
+            http_no_sni,
             acquiring_auth_token: tokio::sync::Mutex::new(()),
         })
+    }
+
+    fn http_client_builder(user_agent: &str) -> ClientBuilder {
+        ClientBuilder::new()
+            .timeout(Duration::from_secs(60))
+            .read_timeout(Duration::from_secs(10))
+            .user_agent(user_agent)
     }
 
     fn clear_auth_token(&self, token: AuthToken) {
@@ -92,8 +105,18 @@ impl Client {
     }
 
     async fn send_http(&self, request: http::Request<String>) -> Result<reqwest::Response, ClientError> {
-        let request = request.try_into().context("could not construct reqwest::Request")?;
-        self.http.execute(request).await.map_err(Into::into)
+        let reqwest_request: reqwest::Request = request.clone().try_into().context("could not construct reqwest::Request")?;
+        match self.http.execute(reqwest_request).await {
+            Ok(resp) => return Ok(resp),
+            Err(error) => tracing::error!("error executing request, maybe blocked, trying again without SNI: {:?}", error),
+        }
+
+        let reqwest_request: reqwest::Request = request.clone().try_into().context("could not construct reqwest::Request")?;
+        self.http_no_sni
+            .execute(reqwest_request)
+            .await
+            .context("error executing request")
+            .map_err(Into::into)
     }
 
     pub async fn run<C: Cmd>(&self, cmd: C) -> Result<C::Output, ClientError> {
