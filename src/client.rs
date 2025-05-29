@@ -5,6 +5,7 @@ use crate::types::{AccountId, AuthToken};
 use anyhow::{anyhow, Context};
 use http::HeaderValue;
 use reqwest::ClientBuilder;
+use rustls::client::WebPkiServerVerifier;
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::time::Duration;
@@ -14,6 +15,7 @@ use thiserror::Error;
 pub struct Client {
     account_id: AccountId,
     base_url: String,
+    alternative_hosts: Vec<String>,
     http: reqwest::Client,
     http_no_sni: reqwest::Client,
     cached_auth_token: Arc<Mutex<Option<AuthToken>>>,
@@ -38,18 +40,13 @@ pub enum ClientError {
 }
 
 impl Client {
-    pub fn new(base_url: impl ToString, account_id: AccountId, user_agent: &str) -> anyhow::Result<Self> {
+    pub fn new(base_url: impl ToString, alternative_hosts: Vec<String>, account_id: AccountId, user_agent: &str) -> anyhow::Result<Self> {
         let mut base_url = base_url.to_string();
         if !base_url.ends_with('/') {
             base_url += "/"
         }
-        let http = Self::http_client_builder(user_agent)
-            .build()
-            .context("failed to initialize HTTP client")?;
-        let http_no_sni = Self::http_client_builder(user_agent)
-            .tls_sni(false)
-            .build()
-            .context("failed to initialize no-sni HTTP client")?;
+        let http = Self::http_client_builder(user_agent, false)?;
+        let http_no_sni = Self::http_client_builder(user_agent, true)?;
 
         Ok(Self {
             account_id,
@@ -58,14 +55,22 @@ impl Client {
             http,
             http_no_sni,
             acquiring_auth_token: tokio::sync::Mutex::new(()),
+            alternative_hosts,
         })
     }
 
-    fn http_client_builder(user_agent: &str) -> ClientBuilder {
-        ClientBuilder::new()
+    fn http_client_builder(user_agent: &str, no_sni: bool) -> anyhow::Result<reqwest::Client> {
+        let builder = ClientBuilder::new()
             .timeout(Duration::from_secs(60))
             .read_timeout(Duration::from_secs(10))
-            .user_agent(user_agent)
+            .user_agent(user_agent);
+        let builder = if no_sni {
+            builder.tls_sni(false)
+        } else {
+            builder.use_preconfigured_tls(Self::rustls_config()?)
+        };
+        let client = builder.build().context("failed to initialize HTTP client")?;
+        Ok(client)
     }
 
     fn clear_auth_token(&self, token: AuthToken) {
@@ -106,17 +111,48 @@ impl Client {
 
     async fn send_http(&self, request: http::Request<String>) -> Result<reqwest::Response, ClientError> {
         let reqwest_request: reqwest::Request = request.clone().try_into().context("could not construct reqwest::Request")?;
-        match self.http.execute(reqwest_request).await {
+        let first_error = match self.http.execute(reqwest_request).await {
             Ok(resp) => return Ok(resp),
-            Err(error) => tracing::error!("error executing request, maybe blocked, trying again without SNI: {:?}", error),
+            Err(error) => {
+                tracing::error!(
+                    message_id = "XfTLkg6w",
+                    ?error,
+                    "error executing request, maybe blocked, trying again with alternative hosts",
+                );
+                error
+            }
+        };
+
+        for host in &self.alternative_hosts {
+            let mut reqwest_request: reqwest::Request = request.clone().try_into().context("could not construct reqwest::Request")?;
+            if let Err(error) = reqwest_request.url_mut().set_host(Some(host.as_str())) {
+                tracing::error!(message_id = "6mXOeRSL", host, ?error, "failed to set alternative host on request");
+                continue;
+            };
+            match self.http.execute(reqwest_request).await {
+                Ok(resp) => return Ok(resp),
+                Err(error) => tracing::error!(
+                    message_id = "m6JLZaYN",
+                    host,
+                    ?error,
+                    "error executing request with alternative host, maybe blocked"
+                ),
+            }
         }
 
+        tracing::error!("all attempts to evade blocks using alternative hosts failed, trying again without SNI");
         let reqwest_request: reqwest::Request = request.clone().try_into().context("could not construct reqwest::Request")?;
-        self.http_no_sni
-            .execute(reqwest_request)
-            .await
-            .context("error executing request")
-            .map_err(Into::into)
+        match self.http_no_sni.execute(reqwest_request).await {
+            Ok(resp) => return Ok(resp),
+            Err(error) => tracing::error!(
+                message_id = "CttGsdTj",
+                ?error,
+                "error executing request without SNI, maybe blocked, trying again with alternative hosts"
+            ),
+        }
+
+        tracing::error!(message_id = "QmAdyhxm", "all attempts to evade blocks failed, returning original error");
+        Err(first_error.into())
     }
 
     pub async fn run<C: Cmd>(&self, cmd: C) -> Result<C::Output, ClientError> {
@@ -163,5 +199,75 @@ impl Client {
             },
             Err(err) => Err(err),
         }
+    }
+
+    fn rustls_config() -> anyhow::Result<rustls::ClientConfig> {
+        let crypto = rustls::ClientConfig::builder()
+            .dangerous()
+            .with_custom_certificate_verifier(VerifyApiServerCert::new()?)
+            .with_no_client_auth();
+        Ok(crypto)
+    }
+}
+
+#[derive(Debug)]
+struct VerifyApiServerCert {
+    server_name: rustls::pki_types::ServerName<'static>,
+    web_pki_server_verifier: Arc<dyn rustls::client::danger::ServerCertVerifier>,
+}
+
+impl VerifyApiServerCert {
+    fn new() -> anyhow::Result<Arc<Self>> {
+        let roots = rustls::RootCertStore {
+            roots: webpki_roots::TLS_SERVER_ROOTS.to_vec(),
+        };
+        let web_pki_server_verifier = WebPkiServerVerifier::builder(roots.into()).build()?;
+        let server_name = rustls::pki_types::ServerName::try_from("v1.api.prod.obscura.net")?;
+        Ok(Arc::new(Self {
+            server_name,
+            web_pki_server_verifier,
+        }))
+    }
+}
+
+impl rustls::client::danger::ServerCertVerifier for VerifyApiServerCert {
+    fn verify_server_cert(
+        &self,
+        end_entity: &rustls::pki_types::CertificateDer<'_>,
+        intermediates: &[rustls::pki_types::CertificateDer<'_>],
+        server_name: &rustls::pki_types::ServerName<'_>,
+        ocsp_response: &[u8],
+        now: rustls::pki_types::UnixTime,
+    ) -> Result<rustls::client::danger::ServerCertVerified, rustls::Error> {
+        if server_name.to_str() != self.server_name.to_str() {
+            tracing::info!(
+                message_id = "jx7gpGq8",
+                verify_server_name = %self.server_name.to_str(),
+                request_server_name = %server_name.to_str(),
+                "verifying server certificate with different server name",
+            );
+        }
+        self.web_pki_server_verifier
+            .verify_server_cert(end_entity, intermediates, &self.server_name, ocsp_response, now)
+    }
+    fn verify_tls12_signature(
+        &self,
+        message: &[u8],
+        cert: &rustls::pki_types::CertificateDer<'_>,
+        dss: &rustls::DigitallySignedStruct,
+    ) -> Result<rustls::client::danger::HandshakeSignatureValid, rustls::Error> {
+        self.web_pki_server_verifier.verify_tls12_signature(message, cert, dss)
+    }
+    fn verify_tls13_signature(
+        &self,
+        message: &[u8],
+        cert: &rustls::pki_types::CertificateDer<'_>,
+        dss: &rustls::DigitallySignedStruct,
+    ) -> Result<rustls::client::danger::HandshakeSignatureValid, rustls::Error> {
+        self.web_pki_server_verifier.verify_tls13_signature(message, cert, dss)
+    }
+
+    fn supported_verify_schemes(&self) -> Vec<rustls::SignatureScheme> {
+        self.web_pki_server_verifier.supported_verify_schemes()
     }
 }

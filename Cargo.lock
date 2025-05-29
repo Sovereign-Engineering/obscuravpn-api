@@ -837,6 +837,7 @@ dependencies = [
  "qrcode",
  "rand",
  "reqwest",
+ "rustls",
  "semver",
  "serde",
  "serde_json",
@@ -848,6 +849,7 @@ dependencies = [
  "url",
  "uuid",
  "verhoeff",
+ "webpki-roots",
  "x25519-dalek",
 ]
 

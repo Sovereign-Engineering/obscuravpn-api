@@ -4,6 +4,7 @@ use obscuravpn_api::types::AccountId;
 use obscuravpn_api::{Client, ClientError};
 
 const API_URL: &str = "https://v1.api.prod.obscura.net/api";
+const ALTERNATIVE_HOST: &str = "crimsonlance.net";
 
 #[derive(Parser, Debug, PartialEq)]
 #[command(author, version, about, long_about = None)]
@@ -18,8 +19,9 @@ async fn main() -> anyhow::Result<()> {
     env_logger::init();
     let args = Args::parse();
     let account_id = AccountId::from_string_unchecked(args.account_no);
+    let alternative_hosts = vec![ALTERNATIVE_HOST.to_string()];
 
-    let client = Client::new(API_URL, account_id, "block test cli client")?;
+    let client = Client::new(API_URL, alternative_hosts, account_id, "block test cli client")?;
     match client.acquire_auth_token().await {
         Ok(_) => println!("not blocked"),
         Err(error) => match error {
@@ -39,7 +41,7 @@ async fn main() -> anyhow::Result<()> {
                 bail!("invalid request header value");
             }
             ClientError::Other(error) => {
-                bail!("other error: {}", error);
+                bail!("other error: {:?}", error);
             }
         },
     };
