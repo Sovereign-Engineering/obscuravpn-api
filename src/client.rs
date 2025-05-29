@@ -10,6 +10,7 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use std::time::Duration;
 use thiserror::Error;
+use url::Url;
 
 #[derive(Debug)]
 pub struct Client {
@@ -45,8 +46,16 @@ impl Client {
         if !base_url.ends_with('/') {
             base_url += "/"
         }
-        let http = Self::http_client_builder(user_agent, false)?;
-        let http_no_sni = Self::http_client_builder(user_agent, true)?;
+        let server_name_for_host_verification = Url::parse(&base_url)
+            .context("can't parse base url")?
+            .host_str()
+            .context("base url does not contain host")?
+            .to_string();
+        dbg!(&server_name_for_host_verification);
+        let mut rustls_config = Self::rustls_config(server_name_for_host_verification)?;
+        let http = Self::http_client_builder(user_agent, rustls_config.clone())?;
+        rustls_config.enable_sni = false;
+        let http_no_sni = Self::http_client_builder(user_agent, rustls_config)?;
 
         Ok(Self {
             account_id,
@@ -59,18 +68,14 @@ impl Client {
         })
     }
 
-    fn http_client_builder(user_agent: &str, no_sni: bool) -> anyhow::Result<reqwest::Client> {
-        let builder = ClientBuilder::new()
+    fn http_client_builder(user_agent: &str, rustls_config: rustls::ClientConfig) -> anyhow::Result<reqwest::Client> {
+        ClientBuilder::new()
             .timeout(Duration::from_secs(60))
             .read_timeout(Duration::from_secs(10))
-            .user_agent(user_agent);
-        let builder = if no_sni {
-            builder.tls_sni(false)
-        } else {
-            builder.use_preconfigured_tls(Self::rustls_config()?)
-        };
-        let client = builder.build().context("failed to initialize HTTP client")?;
-        Ok(client)
+            .user_agent(user_agent)
+            .use_preconfigured_tls(rustls_config)
+            .build()
+            .context("failed to initialize HTTP client")
     }
 
     fn clear_auth_token(&self, token: AuthToken) {
@@ -201,10 +206,10 @@ impl Client {
         }
     }
 
-    fn rustls_config() -> anyhow::Result<rustls::ClientConfig> {
+    fn rustls_config(server_name_for_cert_verification: String) -> anyhow::Result<rustls::ClientConfig> {
         let crypto = rustls::ClientConfig::builder()
             .dangerous()
-            .with_custom_certificate_verifier(VerifyApiServerCert::new()?)
+            .with_custom_certificate_verifier(VerifyApiServerCert::new(server_name_for_cert_verification)?)
             .with_no_client_auth();
         Ok(crypto)
     }
@@ -217,12 +222,12 @@ struct VerifyApiServerCert {
 }
 
 impl VerifyApiServerCert {
-    fn new() -> anyhow::Result<Arc<Self>> {
+    fn new(server_name: String) -> anyhow::Result<Arc<Self>> {
         let roots = rustls::RootCertStore {
             roots: webpki_roots::TLS_SERVER_ROOTS.to_vec(),
         };
         let web_pki_server_verifier = WebPkiServerVerifier::builder(roots.into()).build()?;
-        let server_name = rustls::pki_types::ServerName::try_from("v1.api.prod.obscura.net")?;
+        let server_name = rustls::pki_types::ServerName::try_from(server_name)?;
         Ok(Arc::new(Self {
             server_name,
             web_pki_server_verifier,
