@@ -20,3 +20,5 @@ pub use client::Client;
 pub use client::ClientError;
 #[cfg(feature = "client")]
 pub use response::Response;
+#[cfg(feature = "client")]
+pub use rustls;

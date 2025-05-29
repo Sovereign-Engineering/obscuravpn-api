@@ -66,7 +66,7 @@ async fn main() -> anyhow::Result<()> {
     let url = args.base_url;
     let account_id = AccountId::from_string_unchecked(args.account_no);
 
-    let client = Client::new(url, account_id, "example cli client")?;
+    let client = Client::new(url, vec![], account_id, "example cli client")?;
 
     eprintln!("Get account info");
     let account_info = client.run(GetAccountInfo()).await?;
