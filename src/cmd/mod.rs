@@ -104,53 +104,41 @@ pub struct ProtocolError {
 }
 
 pub async fn parse_response<T: 'static + DeserializeOwned>(res: reqwest::Response) -> Result<Response<T>, ClientError> {
-    let is_json = res
-        .headers()
-        .get(http::header::CONTENT_TYPE)
-        .is_some_and(|h| h.as_bytes() == b"application/json");
-    if !is_json {
-        let status = res.status();
-        return match res.text().await {
-            Ok(raw) => Err(ClientError::ProtocolError(ProtocolError {
-                status,
-                raw,
-                source: anyhow::anyhow!("Non-JSON {status} response"),
-            })),
-            Err(err) => Err(ClientError::ProtocolError(ProtocolError {
-                status,
-                raw: String::new(),
-                source: err.into(),
-            })),
-        };
-    }
-
-    let etag = res.headers().get(http::header::ETAG).cloned();
-
     let status = res.status();
-
-    let body = if status == StatusCode::NOT_MODIFIED {
-        None
-    } else if !status.is_success() {
-        return Err(ClientError::ApiError(ApiError {
-            status,
-            body: res.json().await.map_err(|err| {
-                ClientError::ProtocolError(ProtocolError {
+    let etag = res.headers().get(http::header::ETAG).cloned();
+    if status == StatusCode::NOT_MODIFIED {
+        Ok(Response::new(None, etag))
+    } else {
+        let is_json = res
+            .headers()
+            .get(http::header::CONTENT_TYPE)
+            .is_some_and(|h| h.as_bytes() == b"application/json");
+        if !is_json {
+            let (raw, source) = match res.text().await {
+                Ok(raw) => (raw, anyhow::anyhow!("Non-JSON {status} response")),
+                Err(err) => (String::new(), err.into()),
+            };
+            Err(ProtocolError { status, raw, source }.into())
+        } else if !status.is_success() {
+            Err(ApiError {
+                status,
+                body: res.json().await.map_err(|err| ProtocolError {
                     status,
                     raw: String::new(),
                     source: err.into(),
-                })
-            })?,
-        }));
-    } else {
-        let empty: Box<dyn Any + Send + Sync> = Box::new(());
-        Some(if let Ok(empty) = empty.downcast::<T>() {
-            *empty
+                })?,
+            }
+            .into())
         } else {
-            res.json().await.map_err(anyhow::Error::new)?
-        })
-    };
-
-    Ok(Response::new(body, etag))
+            let empty: Box<dyn Any + Send + Sync> = Box::new(());
+            let body = if let Ok(empty) = empty.downcast::<T>() {
+                *empty
+            } else {
+                res.json().await?
+            };
+            Ok(Response::new(Some(body), etag))
+        }
+    }
 }
 
 #[cfg(test)]
