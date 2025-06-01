@@ -51,7 +51,6 @@ impl Client {
             .host_str()
             .context("base url does not contain host")?
             .to_string();
-        dbg!(&server_name_for_host_verification);
         let mut rustls_config = Self::rustls_config(server_name_for_host_verification)?;
         let http = Self::http_client_builder(user_agent, rustls_config.clone())?;
         rustls_config.enable_sni = false;
