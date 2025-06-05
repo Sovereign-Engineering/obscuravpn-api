@@ -4,8 +4,10 @@ use crate::token::AcquireToken;
 use crate::types::{AccountId, AuthToken};
 use anyhow::{anyhow, Context};
 use http::HeaderValue;
+use itertools::Itertools;
 use reqwest::ClientBuilder;
 use rustls::client::WebPkiServerVerifier;
+use std::iter::once;
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::time::Duration;
@@ -46,12 +48,13 @@ impl Client {
         if !base_url.ends_with('/') {
             base_url += "/"
         }
-        let server_name_for_host_verification = Url::parse(&base_url)
+        let primary_host = Url::parse(&base_url)
             .context("can't parse base url")?
             .host_str()
             .context("base url does not contain host")?
             .to_string();
-        let mut rustls_config = Self::rustls_config(server_name_for_host_verification)?;
+        let server_names = once(primary_host).chain(alternative_hosts.iter().cloned());
+        let mut rustls_config = Self::rustls_config(server_names)?;
         let http = Self::http_client_builder(user_agent, rustls_config.clone())?;
         rustls_config.enable_sni = false;
         let http_no_sni = Self::http_client_builder(user_agent, rustls_config)?;
@@ -205,7 +208,7 @@ impl Client {
         }
     }
 
-    fn rustls_config(server_name_for_cert_verification: String) -> anyhow::Result<rustls::ClientConfig> {
+    fn rustls_config(server_name_for_cert_verification: impl IntoIterator<Item = String>) -> anyhow::Result<rustls::ClientConfig> {
         let crypto = rustls::ClientConfig::builder()
             .dangerous()
             .with_custom_certificate_verifier(VerifyApiServerCert::new(server_name_for_cert_verification)?)
@@ -216,19 +219,19 @@ impl Client {
 
 #[derive(Debug)]
 struct VerifyApiServerCert {
-    server_name: rustls::pki_types::ServerName<'static>,
+    server_names: Vec<rustls::pki_types::ServerName<'static>>,
     web_pki_server_verifier: Arc<dyn rustls::client::danger::ServerCertVerifier>,
 }
 
 impl VerifyApiServerCert {
-    fn new(server_name: String) -> anyhow::Result<Arc<Self>> {
+    fn new(server_names: impl IntoIterator<Item = String>) -> anyhow::Result<Arc<Self>> {
         let roots = rustls::RootCertStore {
             roots: webpki_roots::TLS_SERVER_ROOTS.to_vec(),
         };
         let web_pki_server_verifier = WebPkiServerVerifier::builder(roots.into()).build()?;
-        let server_name = rustls::pki_types::ServerName::try_from(server_name)?;
+        let server_names = server_names.into_iter().map(rustls::pki_types::ServerName::try_from).try_collect()?;
         Ok(Arc::new(Self {
-            server_name,
+            server_names,
             web_pki_server_verifier,
         }))
     }
@@ -243,16 +246,36 @@ impl rustls::client::danger::ServerCertVerifier for VerifyApiServerCert {
         ocsp_response: &[u8],
         now: rustls::pki_types::UnixTime,
     ) -> Result<rustls::client::danger::ServerCertVerified, rustls::Error> {
-        if server_name.to_str() != self.server_name.to_str() {
-            tracing::info!(
-                message_id = "jx7gpGq8",
-                verify_server_name = %self.server_name.to_str(),
-                request_server_name = %server_name.to_str(),
-                "verifying server certificate with different server name",
-            );
+        use rustls::CertificateError::NotValidForName;
+        use rustls::Error::InvalidCertificate;
+        let mut first_non_server_name_error = None;
+        for verify_server_name in self.server_names.iter() {
+            let result = self
+                .web_pki_server_verifier
+                .verify_server_cert(end_entity, intermediates, verify_server_name, ocsp_response, now);
+            match result {
+                Ok(result) => return Ok(result),
+                Err(InvalidCertificate(NotValidForName)) => {
+                    tracing::info!(
+                        message_id = "UZEx21nI",
+                        verify_server_name = %verify_server_name.to_str(),
+                        request_server_name = %server_name.to_str(),
+                        "certificate not valid for server name",
+                    );
+                }
+                Err(error) => {
+                    tracing::error!(
+                        message_id = "eB8okNs3",
+                        ?error,
+                        verify_server_name = %verify_server_name.to_str(),
+                        request_server_name = %server_name.to_str(),
+                        "failed to verify server certificate",
+                    );
+                    first_non_server_name_error = Some(error);
+                }
+            }
         }
-        self.web_pki_server_verifier
-            .verify_server_cert(end_entity, intermediates, &self.server_name, ocsp_response, now)
+        Err(first_non_server_name_error.unwrap_or(InvalidCertificate(NotValidForName)))
     }
     fn verify_tls12_signature(
         &self,
