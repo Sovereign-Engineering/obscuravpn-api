@@ -28,6 +28,7 @@ use std::any::Any;
 
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use thiserror::Error;
+use tokio_stream::StreamExt;
 use url::Url;
 
 use crate::response::Response;
@@ -107,36 +108,71 @@ pub async fn parse_response<T: 'static + DeserializeOwned>(res: reqwest::Respons
     let status = res.status();
     let etag = res.headers().get(http::header::ETAG).cloned();
     if status == StatusCode::NOT_MODIFIED {
-        Ok(Response::new(None, etag))
-    } else {
-        let is_json = res
-            .headers()
-            .get(http::header::CONTENT_TYPE)
-            .is_some_and(|h| h.as_bytes() == b"application/json");
-        if !is_json {
-            let (raw, source) = match res.text().await {
-                Ok(raw) => (raw, anyhow::anyhow!("Non-JSON {status} response")),
-                Err(err) => (String::new(), err.into()),
-            };
-            Err(ProtocolError { status, raw, source }.into())
-        } else if !status.is_success() {
-            Err(ApiError {
-                status,
-                body: res.json().await.map_err(|err| ProtocolError {
-                    status,
-                    raw: String::new(),
-                    source: err.into(),
-                })?,
+        return Ok(Response::new(None, etag));
+    }
+    let is_json = res
+        .headers()
+        .get(http::header::CONTENT_TYPE)
+        .is_some_and(|h| h.as_bytes() == b"application/json");
+    let empty: Box<dyn Any + Send + Sync> = Box::new(());
+
+    const MAX_RESPONSE_SIZE: usize = 5_000_000;
+    let body = {
+        let mut body = Vec::new();
+        let mut chunks = res.bytes_stream();
+        loop {
+            match chunks.next().await {
+                Some(Ok(chunk)) => {
+                    if chunk.len() + body.len() > MAX_RESPONSE_SIZE {
+                        return Err(ClientError::ResponseTooLarge);
+                    }
+                    body.extend_from_slice(&chunk);
+                }
+                None => break body,
+                Some(Err(error)) => {
+                    return Err(ProtocolError {
+                        status,
+                        raw: String::new(),
+                        source: error.into(),
+                    }
+                    .into())
+                }
             }
-            .into())
-        } else {
-            let empty: Box<dyn Any + Send + Sync> = Box::new(());
-            let body = if let Ok(empty) = empty.downcast::<T>() {
-                *empty
-            } else {
-                res.json().await?
-            };
-            Ok(Response::new(Some(body), etag))
+        }
+    };
+
+    if !is_json {
+        Err(ProtocolError {
+            status,
+            raw: String::from_utf8(body).unwrap_or_default(),
+            source: anyhow::anyhow!("Non-JSON {status} response"),
+        }
+        .into())
+    } else if !status.is_success() {
+        match serde_json::from_slice(&body) {
+            Ok(api_error_body) => Err(ApiError {
+                status,
+                body: api_error_body,
+            }
+            .into()),
+            Err(error) => Err(ProtocolError {
+                status,
+                raw: String::from_utf8(body).unwrap_or_default(),
+                source: error.into(),
+            }
+            .into()),
+        }
+    } else if let Ok(empty) = empty.downcast::<T>() {
+        Ok(Response::new(Some(*empty), etag))
+    } else {
+        match serde_json::from_slice(&body) {
+            Ok(success_body) => Ok(Response::new(Some(success_body), etag)),
+            Err(error) => Err(ProtocolError {
+                status,
+                raw: String::from_utf8(body).unwrap_or_default(),
+                source: error.into(),
+            }
+            .into()),
         }
     }
 }
