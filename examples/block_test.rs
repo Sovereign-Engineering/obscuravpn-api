@@ -40,6 +40,9 @@ async fn main() -> anyhow::Result<()> {
             ClientError::InvalidHeaderValue => {
                 bail!("invalid request header value");
             }
+            ClientError::ResponseTooLarge => {
+                bail!("response too large");
+            }
             ClientError::Other(error) => {
                 bail!("other error: {:?}", error);
             }

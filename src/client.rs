@@ -31,6 +31,8 @@ pub enum ClientError {
     ApiError(#[from] ApiError),
     #[error("invalid header value")]
     InvalidHeaderValue,
+    #[error("response too large")]
+    ResponseTooLarge,
     #[error("request processing error: {0}")]
     Other(#[from] anyhow::Error),
     /// We got a response but it wasn't the expected format.
