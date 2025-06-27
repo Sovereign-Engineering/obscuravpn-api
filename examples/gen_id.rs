@@ -5,6 +5,8 @@ pub const ACCOUNT_ID_LEN: usize = 20;
 const ACCOUNT_ID_MAX: u64 = 10u64.pow(ACCOUNT_ID_LEN as u32 - 1) - 1;
 
 fn main() {
+    tracing_subscriber::fmt::init();
+
     let id = rand::thread_rng().gen_range(0..=ACCOUNT_ID_MAX);
     let without_check_digit = format!("{:019}", id);
     let check_digit = without_check_digit.calculate_verhoeff_check_digit();
