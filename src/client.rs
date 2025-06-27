@@ -122,7 +122,7 @@ impl Client {
         let reqwest_request: reqwest::Request = request.clone().try_into().context("could not construct reqwest::Request")?;
         let first_error = match self.http.execute(reqwest_request).await {
             Ok(resp) => return Ok(resp),
-            Err(error) => {
+            Err(error) if error.is_connect() => {
                 tracing::error!(
                     message_id = "XfTLkg6w",
                     ?error,
@@ -130,6 +130,7 @@ impl Client {
                 );
                 error
             }
+            Err(error) => return Err(error.into()),
         };
 
         for host in &self.alternative_hosts {
@@ -140,12 +141,13 @@ impl Client {
             };
             match self.http.execute(reqwest_request).await {
                 Ok(resp) => return Ok(resp),
-                Err(error) => tracing::error!(
+                Err(error) if error.is_connect() => tracing::error!(
                     message_id = "m6JLZaYN",
                     host,
                     ?error,
                     "error executing request with alternative host, maybe blocked"
                 ),
+                Err(error) => return Err(error.into()),
             }
         }
 
@@ -153,11 +155,12 @@ impl Client {
         let reqwest_request: reqwest::Request = request.clone().try_into().context("could not construct reqwest::Request")?;
         match self.http_no_sni.execute(reqwest_request).await {
             Ok(resp) => return Ok(resp),
-            Err(error) => tracing::error!(
+            Err(error) if error.is_connect() => tracing::error!(
                 message_id = "CttGsdTj",
                 ?error,
                 "error executing request without SNI, maybe blocked, trying again with alternative hosts"
             ),
+            Err(error) => return Err(error.into()),
         }
 
         tracing::error!(message_id = "QmAdyhxm", "all attempts to evade blocks failed, returning original error");
@@ -248,20 +251,43 @@ impl rustls::client::danger::ServerCertVerifier for VerifyApiServerCert {
         ocsp_response: &[u8],
         now: rustls::pki_types::UnixTime,
     ) -> Result<rustls::client::danger::ServerCertVerified, rustls::Error> {
-        use rustls::CertificateError::NotValidForName;
+        use rustls::CertificateError::{NotValidForName, NotValidForNameContext};
         use rustls::Error::InvalidCertificate;
+        use x509_parser::prelude::*;
+
+        let mut presented_server_names: Option<Vec<String>> = None;
+        if let Ok((_, cert)) = X509Certificate::from_der(end_entity) {
+            if let Ok(Some(sa_names)) = cert.subject_alternative_name() {
+                for sa_name in &sa_names.value.general_names {
+                    if let GeneralName::DNSName(dns_name) = sa_name {
+                        presented_server_names.get_or_insert_default().push(dns_name.to_string());
+                    }
+                }
+            };
+        }
+
         let mut first_non_server_name_error = None;
         for verify_server_name in self.server_names.iter() {
             let result = self
                 .web_pki_server_verifier
                 .verify_server_cert(end_entity, intermediates, verify_server_name, ocsp_response, now);
             match result {
-                Ok(result) => return Ok(result),
-                Err(InvalidCertificate(NotValidForName)) => {
+                Ok(result) => {
+                    tracing::info!(
+                        message_id = "BN7vczBq",
+                        verify_server_name = &*verify_server_name.to_str(),
+                        request_server_name = &*server_name.to_str(),
+                        presented_server_names = ?presented_server_names,
+                        "certificate valid",
+                    );
+                    return Ok(result);
+                }
+                Err(InvalidCertificate(NotValidForName | NotValidForNameContext { .. })) => {
                     tracing::info!(
                         message_id = "UZEx21nI",
-                        verify_server_name = %verify_server_name.to_str(),
-                        request_server_name = %server_name.to_str(),
+                        verify_server_name = &*verify_server_name.to_str(),
+                        request_server_name = &*server_name.to_str(),
+                        presented_server_names = ?presented_server_names,
                         "certificate not valid for server name",
                     );
                 }
@@ -269,9 +295,10 @@ impl rustls::client::danger::ServerCertVerifier for VerifyApiServerCert {
                     tracing::error!(
                         message_id = "eB8okNs3",
                         ?error,
-                        verify_server_name = %verify_server_name.to_str(),
-                        request_server_name = %server_name.to_str(),
-                        "failed to verify server certificate",
+                        verify_server_name = &*verify_server_name.to_str(),
+                        request_server_name = &*server_name.to_str(),
+                        presented_server_names = ?presented_server_names,
+                    "failed to verify server certificate",
                     );
                     first_non_server_name_error = Some(error);
                 }

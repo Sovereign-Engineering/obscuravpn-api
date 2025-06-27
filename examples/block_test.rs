@@ -16,7 +16,8 @@ struct Args {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    env_logger::init();
+    tracing_subscriber::fmt::init();
+
     let args = Args::parse();
     let account_id = AccountId::from_string_unchecked(args.account_no);
     let alternative_hosts = vec![ALTERNATIVE_HOST.to_string()];
