@@ -51,7 +51,9 @@ pub trait Cmd: Serialize + DeserializeOwned + std::fmt::Debug {
         if let Some(etag) = etag {
             request.headers_mut().insert(http::header::IF_NONE_MATCH, etag);
         }
-        if Self::METHOD != http::Method::GET {
+        if Self::METHOD == http::Method::GET {
+            // TODO: Support GET parameters: https://linear.app/soveng/issue/OBS-2002/support-get-query-parameters-in-rust-api-client
+        } else {
             *request.body_mut() = serde_json::to_string(self)?;
         }
         Ok(request)
@@ -88,6 +90,7 @@ pub enum ApiErrorKind {
     NoLongerSupported {},
     NoMatchingExit {},
     RateLimitExceeded {},
+    SaleNotFound {},
     SignupLimitExceeded {},
     TunnelLimitExceeded {},
     WgKeyRotationRequired {},

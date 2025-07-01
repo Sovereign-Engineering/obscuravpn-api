@@ -311,8 +311,14 @@ pub struct Price {
     pub sale: Option<Sale>,
 }
 
+/// Opaque ID not to be displayed to users.
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct SaleId(pub String);
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Sale {
+    pub id: SaleId,
+
     /// Example: "Launch Sale"
     pub title: String,
 

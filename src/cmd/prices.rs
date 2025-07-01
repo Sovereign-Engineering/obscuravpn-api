@@ -4,8 +4,12 @@ use serde::{Deserialize, Serialize};
 
 const PRICES_PATH: &str = "prices";
 
+// WARN: Client doesn't support GET parameters
+// https://linear.app/soveng/issue/OBS-2002/support-get-query-parameters-in-rust-api-client
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct ListPrices {}
+pub struct ListPrices {
+    pub code: Option<String>,
+}
 
 impl Cmd for ListPrices {
     type Output = Prices;
@@ -29,6 +33,7 @@ fn test_json() {
             "usd_cents": 8000,
             "regular_usd_cents": 9600,
             "sale": {
+                "id": "year",
                 "title": "Yearly Discount",
                 "summary": "Yearly Subscritpion Discount"
             }
