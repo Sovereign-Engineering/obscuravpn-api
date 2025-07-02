@@ -60,21 +60,34 @@ impl std::fmt::Debug for AccountId {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct AccountInfo {
     pub id: AccountId,
+    // TODO: Remove this field if we ever bump the API version, since it's
+    // redundant with `active_reason`
     pub active: bool,
+    pub active_reason: Option<AccountActiveReason>,
     pub top_up: Option<TopUp>,
-    pub subscription: Option<Subscription>,
+    // TODO: Rename this field if we ever bump the API version
+    #[serde(rename = "subscription")]
+    pub stripe_subscription: Option<StripeSubscriptionInfo>,
+    pub app_store_subscription: Option<AppStoreSubscriptionInfo>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+pub enum AccountActiveReason {
+    TopUp,
+    StripeSubscription,
+    AppStoreSubscription,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct TopUp {
     pub credit_expires_at: i64,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Subscription {
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct StripeSubscriptionInfo {
     /// string repr of [`stripe::SubscriptionStatus`][https://docs.rs/async-stripe/latest/stripe/enum.SubscriptionStatus.html]
     pub status: String,
     /// period start in seconds since unix epoch
@@ -85,7 +98,7 @@ pub struct Subscription {
     pub cancel_at_period_end: bool,
 }
 
-impl Subscription {
+impl StripeSubscriptionInfo {
     pub fn new(status: String, current_period_start: i64, current_period_end: i64, cancel_at_period_end: bool) -> Self {
         Self {
             status,
@@ -94,6 +107,16 @@ impl Subscription {
             cancel_at_period_end,
         }
     }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct AppStoreSubscriptionInfo {
+    /// https://developer.apple.com/documentation/appstoreserverapi/status
+    pub status: u8,
+    /// Whether the subscription will renew automatically
+    pub auto_renew_status: bool,
+    /// Subscription expiration date in seconds since unix epoch
+    pub renewal_date: i64,
 }
 
 /// The maximum length that a tunnel label can be set to.
