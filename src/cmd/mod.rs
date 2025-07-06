@@ -1,5 +1,5 @@
 mod account;
-mod app_store;
+mod apple;
 mod cache_wg_key;
 mod exit;
 mod exit2;
@@ -12,7 +12,7 @@ mod stripe;
 mod tunnel;
 
 pub use account::*;
-pub use app_store::*;
+pub use apple::*;
 pub use cache_wg_key::*;
 pub use exit::*;
 pub use exit2::*;

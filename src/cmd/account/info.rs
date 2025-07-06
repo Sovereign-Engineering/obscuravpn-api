@@ -17,10 +17,9 @@ fn test_account_info_json() {
         {
           "id": "0000000000000000000",
           "active": true,
-          "active_reason": "TopUp",
           "top_up": { "credit_expires_at": 1000 },
           "subscription": null,
-          "app_store_subscription": null
+          "apple_subscription": null
         }
     "#;
     crate::cmd::check_cmd_json::<GetAccountInfo>(None, Some(output_json));

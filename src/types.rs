@@ -63,22 +63,12 @@ impl std::fmt::Debug for AccountId {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct AccountInfo {
     pub id: AccountId,
-    // TODO: Remove this field if we ever bump the API version, since it's
-    // redundant with `active_reason`
     pub active: bool,
-    pub active_reason: Option<AccountActiveReason>,
     pub top_up: Option<TopUp>,
     // TODO: Rename this field if we ever bump the API version
     #[serde(rename = "subscription")]
     pub stripe_subscription: Option<StripeSubscriptionInfo>,
-    pub app_store_subscription: Option<AppStoreSubscriptionInfo>,
-}
-
-#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
-pub enum AccountActiveReason {
-    TopUp,
-    StripeSubscription,
-    AppStoreSubscription,
+    pub apple_subscription: Option<AppleSubscriptionInfo>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -110,7 +100,7 @@ impl StripeSubscriptionInfo {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct AppStoreSubscriptionInfo {
+pub struct AppleSubscriptionInfo {
     /// https://developer.apple.com/documentation/appstoreserverapi/status
     pub status: u8,
     /// Whether the subscription will renew automatically
