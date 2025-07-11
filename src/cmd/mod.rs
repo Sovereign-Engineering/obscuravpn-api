@@ -89,7 +89,6 @@ pub enum ApiErrorKind {
     NoApiRoute {},
     NoLongerSupported {},
     NoMatchingExit {},
-    NotFound {},
     RateLimitExceeded {},
     SignupLimitExceeded {},
     TunnelLimitExceeded {},
