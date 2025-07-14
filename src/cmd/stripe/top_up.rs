@@ -1,4 +1,4 @@
-use crate::cmd::Cmd;
+use crate::{cmd::Cmd, types::SaleId};
 use serde::{Deserialize, Serialize};
 
 const STRIPE_TOP_UP_PATH: &str = "stripe/top_up";
@@ -11,6 +11,11 @@ pub struct StripeTopUpInfo {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct CreateStripeTopUp {
     pub months: u16,
+
+    /// Sale ID for this price.
+    ///
+    /// If specified it *must* apply to this price or the request will be rejected.
+    pub sale: Option<SaleId>,
 }
 
 impl Cmd for CreateStripeTopUp {

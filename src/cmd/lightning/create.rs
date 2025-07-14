@@ -1,4 +1,4 @@
-use crate::cmd::Cmd;
+use crate::{cmd::Cmd, types::SaleId};
 use serde::{Deserialize, Serialize};
 
 const LIGHTNING_TOP_UP_PATH: &str = "lightning/top_up";
@@ -12,6 +12,11 @@ pub struct LightningTopUpInfo {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct CreateLightningTopUp {
     pub months: u16,
+
+    /// Sale ID for this price.
+    ///
+    /// If specified it *must* apply to this price or the request will be rejected.
+    pub sale: Option<SaleId>,
 }
 
 impl Cmd for CreateLightningTopUp {
