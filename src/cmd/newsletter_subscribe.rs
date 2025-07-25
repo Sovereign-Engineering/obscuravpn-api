@@ -1,10 +1,21 @@
+use crate::types::SubscriptionTarget;
 use serde::{Deserialize, Serialize};
 
 use super::Cmd;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct NewsletterSubscribe {
-    pub email: String,
+    /// DEPRECATED, use `target`.
+    pub email: Option<String>,
+
+    /// Required, optional for migration only.
+    pub target: Option<SubscriptionTarget>,
+
+    /// Set of subscriptions to subscribe to, they are identified by strings.
+    ///
+    /// This is required, for legacy reasons if not provided or empty it defaults to the general newsletter.
+    #[serde(default)]
+    pub subscriptions: Vec<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -25,7 +36,61 @@ fn test_json() {
         Some(
             r#"
             {
-                "email": "me@example"
+                "email": null,
+                "subscriptions": [
+                    "blog"
+                ],
+                "target": {
+                    "type": "email",
+                    "addr": "me@example",
+                    "pgp_fingerprint": "B66B891DD83B0E677D84FC309BB92CC1552E99AA"
+                }
+            }
+            "#,
+        ),
+        Some(
+            r#"
+            {
+                "id": 37,
+                "unsubscribe_secret": "29dcf763-962f-4f6f-8aa0-98cd751bd208"
+            }
+            "#,
+        ),
+    );
+
+    crate::cmd::check_cmd_json::<NewsletterSubscribe>(
+        Some(
+            r#"
+            {
+                "email": null,
+                "subscriptions": [
+                    "platform-windows",
+                    "platform-android"
+                ],
+                "target": {
+                    "type": "nostr",
+                    "addr": "me@example"
+                }
+            }
+            "#,
+        ),
+        Some(
+            r#"
+            {
+                "id": 37,
+                "unsubscribe_secret": "29dcf763-962f-4f6f-8aa0-98cd751bd208"
+            }
+            "#,
+        ),
+    );
+
+    crate::cmd::check_cmd_json::<NewsletterSubscribe>(
+        Some(
+            r#"
+            {
+                "email": "me@example",
+                "subscriptions": [],
+                "target": null
             }
             "#,
         ),
