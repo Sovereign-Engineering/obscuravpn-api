@@ -99,6 +99,13 @@ impl StripeSubscriptionInfo {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Ord, PartialOrd, Deserialize, Serialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum SubscriptionTarget {
+    Email { addr: String, pgp_fingerprint: Option<String> },
+    Nostr { addr: String },
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct AppleSubscriptionInfo {
     /// https://developer.apple.com/documentation/appstoreserverapi/status
