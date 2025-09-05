@@ -42,8 +42,7 @@ fn test_json() {
                 ],
                 "target": {
                     "type": "email",
-                    "addr": "me@example",
-                    "pgp_fingerprint": "B66B891DD83B0E677D84FC309BB92CC1552E99AA"
+                    "addr": "me@example"
                 }
             }
             "#,
