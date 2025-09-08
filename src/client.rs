@@ -1,6 +1,6 @@
 use crate::cmd::{parse_response, ApiError, ApiErrorKind, Cmd, ETagCmd, ProtocolError};
 use crate::response::Response;
-use crate::token::AcquireToken;
+use crate::token::{AcquireToken, AcquireToken2Output};
 use crate::types::{AccountId, AuthToken};
 use anyhow::{anyhow, Context};
 use http::HeaderValue;
@@ -89,25 +89,31 @@ impl Client {
         }
     }
 
-    pub async fn acquire_auth_token(&self) -> Result<AuthToken, ClientError> {
+    pub async fn acquire_auth_token(&self) -> Result<AcquireToken2Output, ClientError> {
         if let Some(auth_token) = self.get_auth_token() {
-            return Ok(auth_token);
+            return Ok(AcquireToken2Output {
+                auth_token: auth_token.into(),
+                url_override: None,
+            });
         }
 
         let acquiring_auth_token = self.acquiring_auth_token.lock().await;
 
         if let Some(auth_token) = self.get_auth_token() {
-            return Ok(auth_token);
+            return Ok(AcquireToken2Output {
+                auth_token: auth_token.into(),
+                url_override: None,
+            });
         }
         let account_id = self.account_id.clone();
-        let request = AcquireToken { account_id }.to_request(&self.base_url)?;
+        let request = AcquireToken { account_id }.to_request2(&self.base_url)?;
         let res = self.send_http(request).await?;
-        let res = parse_response::<String>(res).await?;
-        let auth_token: AuthToken = res.into_body().context("No auth token in response")?.into();
-        self.set_auth_token(Some(auth_token.clone()));
+        let res = parse_response::<AcquireToken2Output>(res).await?;
+        let body = res.into_body().context("No auth token in response")?;
+        self.set_auth_token(Some(body.auth_token.clone().into()));
 
         drop(acquiring_auth_token);
-        Ok(auth_token)
+        Ok(body)
     }
 
     pub fn get_auth_token(&self) -> Option<AuthToken> {
@@ -184,7 +190,7 @@ impl Client {
             .transpose()
             .map_err(|_| ClientError::InvalidHeaderValue)?;
         for _ in 0..3 {
-            let auth_token = self.acquire_auth_token().await?;
+            let auth_token = self.acquire_auth_token().await?.auth_token.into();
             if let Some(output) = self.run_once::<C>(&cmd, &auth_token, etag.clone()).await? {
                 return Ok(output);
             }
