@@ -106,6 +106,17 @@ pub enum SubscriptionTarget {
     Nostr { addr: String },
 }
 
+impl SubscriptionTarget {
+    pub fn email(&self) -> Option<&str> {
+        let Self::Email { addr } = self else { return None };
+        Some(addr)
+    }
+    pub fn nostr(&self) -> Option<&str> {
+        let Self::Nostr { addr } = self else { return None };
+        Some(addr)
+    }
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct AppleSubscriptionInfo {
     /// https://developer.apple.com/documentation/appstoreserverapi/status
