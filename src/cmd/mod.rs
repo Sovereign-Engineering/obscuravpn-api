@@ -4,6 +4,7 @@ mod cache_wg_key;
 mod exit;
 mod exit2;
 mod lightning;
+mod monero;
 mod newsletter_subscribe;
 mod prices;
 mod relay;
@@ -18,6 +19,7 @@ pub use exit2::*;
 use http::HeaderValue;
 use http::StatusCode;
 pub use lightning::*;
+pub use monero::*;
 pub use newsletter_subscribe::*;
 pub use prices::*;
 pub use relay::*;
@@ -87,6 +89,7 @@ pub enum ApiErrorKind {
     InternalError {},
     MissingOrInvalidAuthToken {},
     NoApiRoute {},
+    MoneroTopUpNotFound {},
     NoLongerSupported {},
     NoMatchingExit {},
     RateLimitExceeded {},

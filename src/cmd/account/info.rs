@@ -19,7 +19,11 @@ fn test_account_info_json() {
           "active": true,
           "top_up": { "credit_expires_at": 1000 },
           "subscription": null,
-          "apple_subscription": null
+          "apple_subscription": null,
+          "monero_pending_payments": [{
+            "id": "asdas",
+            "status": "confirming"
+          }]
         }
     "#;
     crate::cmd::check_cmd_json::<GetAccountInfo>(None, Some(output_json));
