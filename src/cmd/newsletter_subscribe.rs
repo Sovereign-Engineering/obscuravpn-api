@@ -5,11 +5,7 @@ use super::Cmd;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct NewsletterSubscribe {
-    /// DEPRECATED, use `target`.
-    pub email: Option<String>,
-
-    /// Required, optional for migration only.
-    pub target: Option<SubscriptionTarget>,
+    pub target: SubscriptionTarget,
 
     /// Set of subscriptions to subscribe to, they are identified by strings.
     ///
@@ -30,7 +26,6 @@ fn test_json() {
         Some(
             r#"
             {
-                "email": null,
                 "subscriptions": [
                     "blog"
                 ],
@@ -48,7 +43,6 @@ fn test_json() {
         Some(
             r#"
             {
-                "email": null,
                 "subscriptions": [
                     "platform-windows",
                     "platform-android"
@@ -57,19 +51,6 @@ fn test_json() {
                     "type": "nostr",
                     "addr": "me@example"
                 }
-            }
-            "#,
-        ),
-        None,
-    );
-
-    crate::cmd::check_cmd_json::<NewsletterSubscribe>(
-        Some(
-            r#"
-            {
-                "email": "me@example",
-                "subscriptions": [],
-                "target": null
             }
             "#,
         ),
