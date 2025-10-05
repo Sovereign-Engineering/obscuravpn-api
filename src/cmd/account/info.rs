@@ -23,7 +23,10 @@ fn test_account_info_json() {
           "monero_pending_payments": [{
             "id": "asdas",
             "status": "confirming"
-          }]
+          }],
+          "referral_code": "asdf",
+          "has_referrer": true,
+          "received_free_months": 2
         }
     "#;
     crate::cmd::check_cmd_json::<GetAccountInfo>(None, Some(output_json));
