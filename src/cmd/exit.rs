@@ -31,6 +31,7 @@ fn test_json() {
         "provider_url": "https://mullvad.net/servers",
         "provider_name": "Mullvad VPN",
         "provider_homepage_url": "https://mullvad.net",
+        "pubkey": "a0xtYu+h+7NLLEYmi066Tf03VMs3Tz5BTeW5p4AXA1Q=",
         "tier": 0
       }
     ]

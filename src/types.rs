@@ -305,6 +305,7 @@ pub struct OneExit {
     /// ID of the datacenter server is located at.
     #[serde(default = "rand::random")]
     pub datacenter_id: u32,
+    pub pubkey: WgPubkey,
     /// Higher tier servers should be preferred.
     #[serde(default = "u8::max_value")]
     pub tier: u8,
