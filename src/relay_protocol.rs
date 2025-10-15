@@ -1,5 +1,6 @@
+use serde::{Deserialize, Serialize};
 use static_assertions::const_assert;
-use std::num::NonZeroU32;
+use std::{net::SocketAddr, num::NonZeroU32};
 use strum::{EnumIs, FromRepr};
 
 pub const PROTOCOL_IDENTIFIER: u128 = 0x033d77afd0ded498c6ec25c75c5b0cf2;
@@ -11,6 +12,7 @@ pub enum RelayOpCode {
     Stop = 1,
     Token = 2,
     WireGuard = 3,
+    Configure = 4,
 }
 
 impl RelayOpCode {
@@ -111,6 +113,14 @@ impl MessageCode {
             MessageCode::Response(resp_code) => resp_code.to_bytes(),
         }
     }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RelayConfig {
+    /// Set the exit address to relay traffic to.
+    ///
+    /// This option may only be used by specially trusted clients.
+    pub exit_addr: Option<SocketAddr>,
 }
 
 #[cfg(test)]
