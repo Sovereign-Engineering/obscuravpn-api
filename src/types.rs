@@ -81,6 +81,11 @@ pub struct AccountInfo {
     ///
     /// This counts both bonus months for referees and reward months for referrers.
     pub received_free_months: u32,
+    /// Unless action is taken the account will expire at this date.
+    /// If auto-renewing or inactive, this is None
+    pub current_expiry: Option<i64>,
+    /// When auto-renewing, this is the renewal date
+    pub auto_renews: Option<i64>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

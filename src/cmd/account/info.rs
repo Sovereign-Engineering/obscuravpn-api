@@ -26,7 +26,9 @@ fn test_account_info_json() {
           }],
           "referral_code": "asdf",
           "has_referrer": true,
-          "received_free_months": 2
+          "received_free_months": 2,
+          "current_expiry": 1000,
+          "auto_renews": null
         }
     "#;
     crate::cmd::check_cmd_json::<GetAccountInfo>(None, Some(output_json));

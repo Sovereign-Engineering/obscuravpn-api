@@ -71,3 +71,9 @@ cargo run --example gen_id
 ```
 
 Note that this generates a user id _with_ the checksum (20 characters).
+
+## Running Tests
+
+```sh
+cargo test --all-features
+```
