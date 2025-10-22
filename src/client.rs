@@ -56,6 +56,11 @@ impl Client {
             .context("base url does not contain host")?
             .to_string();
         let server_names = once(primary_host).chain(alternative_hosts.iter().cloned());
+
+        rustls::crypto::ring::default_provider()
+            .install_default()
+            .expect("Failed to install rustls crypto provider");
+
         let mut rustls_config = Self::rustls_config(server_names)?;
         let http = Self::http_client_builder(user_agent, rustls_config.clone())?;
         rustls_config.enable_sni = false;

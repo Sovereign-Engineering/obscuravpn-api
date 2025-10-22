@@ -9,6 +9,8 @@ use serde_with::base64::Base64;
 use serde_with::serde_as;
 use thiserror::Error;
 
+use crate::cmd::{MoneroPaymentStatus, MoneroTopUpId};
+
 #[derive(Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub struct AccountId(String);
 
@@ -69,6 +71,7 @@ pub struct AccountInfo {
     #[serde(rename = "subscription")]
     pub stripe_subscription: Option<StripeSubscriptionInfo>,
     pub apple_subscription: Option<AppleSubscriptionInfo>,
+    pub monero_pending_payments: Vec<MoneroPaymentInProgress>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -406,4 +409,11 @@ impl From<AuthToken> for String {
 
 fn localhost_ip_v6() -> net::Ipv6Addr {
     net::Ipv6Addr::LOCALHOST
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "snake_case")]
+pub struct MoneroPaymentInProgress {
+    pub id: MoneroTopUpId,
+    pub status: MoneroPaymentStatus,
 }

@@ -57,6 +57,14 @@ enum Commands {
         #[clap(long)]
         months: u16,
     },
+    MoneroTopUp {
+        #[clap(long)]
+        months: u16,
+    },
+    MoneroTopUpCheck {
+        #[clap(long)]
+        id: String,
+    },
 }
 
 #[tokio::main]
@@ -162,6 +170,18 @@ async fn main() -> anyhow::Result<()> {
             println!("{}", serde_json::to_string_pretty(&info)?);
             let qr_code = QrCode::new(info.invoice)?.render::<qrcode::render::unicode::Dense1x2>().build();
             eprintln!("{}", qr_code);
+        }
+        Commands::MoneroTopUp { months } => {
+            eprintln!("Creating monero top up");
+            let info = client.run(CreateMoneroTopUp { months, sale: None }).await?;
+            println!("{}", serde_json::to_string_pretty(&info)?);
+            let qr_code = QrCode::new(info.pay_uri)?.render::<qrcode::render::unicode::Dense1x2>().build();
+            eprintln!("{}", qr_code);
+        }
+        Commands::MoneroTopUpCheck { id } => {
+            eprintln!("Checking monero top up");
+            let info = client.run(CheckMoneroTopUp { id: MoneroTopUpId(id) }).await?;
+            println!("{}", serde_json::to_string_pretty(&info)?);
         }
     };
 
