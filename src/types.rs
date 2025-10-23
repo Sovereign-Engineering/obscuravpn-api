@@ -73,7 +73,13 @@ pub struct AccountInfo {
     pub apple_subscription: Option<AppleSubscriptionInfo>,
     pub monero_pending_payments: Vec<MoneroPaymentInProgress>,
     pub referral_code: String,
+    /// If the user has an active referral that will be used for their first purchase.
+    ///
+    /// This value will be reset at some point after the first purchase is made.
     pub has_referrer: bool,
+    /// The number of free months the user has been given.
+    ///
+    /// This counts both bonus months for referees and reward months for referrers.
     pub received_free_months: u32,
 }
 
