@@ -72,6 +72,9 @@ pub struct AccountInfo {
     pub stripe_subscription: Option<StripeSubscriptionInfo>,
     pub apple_subscription: Option<AppleSubscriptionInfo>,
     pub monero_pending_payments: Vec<MoneroPaymentInProgress>,
+    pub referral_code: String,
+    pub has_referrer: bool,
+    pub received_free_months: u32,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

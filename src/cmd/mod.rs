@@ -7,6 +7,7 @@ mod lightning;
 mod monero;
 mod newsletter_subscribe;
 mod prices;
+mod referrals;
 mod relay;
 mod stripe;
 mod tunnel;
@@ -22,6 +23,7 @@ pub use lightning::*;
 pub use monero::*;
 pub use newsletter_subscribe::*;
 pub use prices::*;
+pub use referrals::*;
 pub use relay::*;
 pub use stripe::*;
 pub use tunnel::*;
@@ -87,6 +89,7 @@ pub enum ApiErrorKind {
     AlreadyExists {},
     BadRequest {},
     InternalError {},
+    InvalidReferralCode {},
     MissingOrInvalidAuthToken {},
     NoApiRoute {},
     MoneroTopUpNotFound {},
