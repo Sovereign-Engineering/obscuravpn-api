@@ -65,6 +65,11 @@ enum Commands {
         #[clap(long)]
         id: String,
     },
+    UseReferralCode {
+        #[clap(long)]
+        code: String,
+    },
+    RotateReferralCode,
 }
 
 #[tokio::main]
@@ -185,6 +190,16 @@ async fn main() -> anyhow::Result<()> {
             eprintln!("Checking monero top up");
             let info = client.run(CheckMoneroTopUp { id: MoneroTopUpId(id) }).await?;
             println!("{}", serde_json::to_string_pretty(&info)?);
+        }
+        Commands::UseReferralCode { code } => {
+            eprintln!("Use referral code: {}", &code);
+            client.run(UseReferralCode { code }).await?;
+        }
+        Commands::RotateReferralCode => {
+            eprintln!("Rotate referral code");
+            client.run(RotateReferralCode {}).await?;
+            let account_info = client.run(GetAccountInfo {}).await?;
+            println!("{}", serde_json::to_string_pretty(&account_info)?);
         }
     };
 
