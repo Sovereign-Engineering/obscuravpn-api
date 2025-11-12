@@ -87,7 +87,9 @@ pub struct ApiErrorBody {
 pub enum ApiErrorKind {
     AccountExpired {},
     AlreadyExists {},
+    AlreadyReferred {},
     BadRequest {},
+    IneligibleForReferral {},
     InternalError {},
     InvalidReferralCode {},
     MiscUnauthorized {},
