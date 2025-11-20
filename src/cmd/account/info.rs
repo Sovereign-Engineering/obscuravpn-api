@@ -28,7 +28,9 @@ fn test_account_info_json() {
           "has_referrer": true,
           "received_free_months": 2,
           "current_expiry": 1000,
-          "auto_renews": null
+          "auto_renews": null,
+          "has_paid": true,
+          "free_month_on_next_payment": true
         }
     "#;
     crate::cmd::check_cmd_json::<GetAccountInfo>(None, Some(output_json));
