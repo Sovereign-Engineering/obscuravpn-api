@@ -72,6 +72,9 @@ pub struct AccountInfo {
     pub stripe_subscription: Option<StripeSubscriptionInfo>,
     pub apple_subscription: Option<AppleSubscriptionInfo>,
     pub monero_pending_payments: Vec<MoneroPaymentInProgress>,
+    /// True if the user made any payment in the past.
+    pub has_paid: bool,
+    pub free_month_on_next_payment: bool,
     pub referral_code: String,
     /// If the user has an active referral that will be used for their first purchase.
     ///
