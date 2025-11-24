@@ -35,7 +35,7 @@ pub enum ClientError {
     ResponseTooLarge,
     #[error("request processing error: {0}")]
     Other(#[from] anyhow::Error),
-    /// We got a response but it wasn't the expected format.
+    /// We got a response, but it wasn't the expected format.
     ///
     /// Most likely a response from a proxy or similar.
     #[error("Protocol Error: {0}")]
@@ -45,7 +45,13 @@ pub enum ClientError {
 }
 
 impl Client {
-    pub fn new(base_url: impl ToString, alternative_hosts: Vec<String>, account_id: AccountId, user_agent: &str) -> anyhow::Result<Self> {
+    pub fn new(
+        base_url: impl ToString,
+        alternative_hosts: Vec<String>,
+        account_id: AccountId,
+        user_agent: &str,
+        network_interface: Option<&str>,
+    ) -> anyhow::Result<Self> {
         let mut base_url = base_url.to_string();
         if !base_url.ends_with('/') {
             base_url += "/"
@@ -58,9 +64,9 @@ impl Client {
         let server_names = once(primary_host).chain(alternative_hosts.iter().cloned());
 
         let mut rustls_config = Self::rustls_config(server_names)?;
-        let http = Self::http_client_builder(user_agent, rustls_config.clone())?;
+        let http = Self::http_client_builder(user_agent, rustls_config.clone(), network_interface)?;
         rustls_config.enable_sni = false;
-        let http_no_sni = Self::http_client_builder(user_agent, rustls_config)?;
+        let http_no_sni = Self::http_client_builder(user_agent, rustls_config, network_interface)?;
 
         Ok(Self {
             account_id,
@@ -73,14 +79,21 @@ impl Client {
         })
     }
 
-    fn http_client_builder(user_agent: &str, rustls_config: rustls::ClientConfig) -> anyhow::Result<reqwest::Client> {
-        ClientBuilder::new()
+    fn http_client_builder(
+        user_agent: &str,
+        rustls_config: rustls::ClientConfig,
+        network_interface: Option<&str>,
+    ) -> anyhow::Result<reqwest::Client> {
+        let builder = ClientBuilder::new()
             .timeout(Duration::from_secs(60))
             .read_timeout(Duration::from_secs(10))
             .user_agent(user_agent)
-            .use_preconfigured_tls(rustls_config)
-            .build()
-            .context("failed to initialize HTTP client")
+            .use_preconfigured_tls(rustls_config);
+        let builder = match network_interface {
+            None => builder,
+            Some(network_interface) => builder.interface(network_interface),
+        };
+        builder.build().context("failed to initialize HTTP client")
     }
 
     fn clear_auth_token(&self, token: AuthToken) {
