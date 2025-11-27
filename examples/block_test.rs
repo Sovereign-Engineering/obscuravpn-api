@@ -22,7 +22,7 @@ async fn main() -> anyhow::Result<()> {
     let account_id = AccountId::from_string_unchecked(args.account_no);
     let alternative_hosts = vec![ALTERNATIVE_HOST.to_string()];
 
-    let client = Client::new(API_URL, alternative_hosts, account_id, "block test cli client")?;
+    let client = Client::new(API_URL, alternative_hosts, account_id, "block test cli client", None)?;
     match client.acquire_auth_token().await {
         Ok(_) => println!("not blocked"),
         Err(error) => match error {
