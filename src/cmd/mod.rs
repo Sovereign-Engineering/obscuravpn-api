@@ -147,7 +147,7 @@ pub async fn parse_response<T: 'static + DeserializeOwned>(res: reqwest::Respons
                         raw: String::new(),
                         source: error.into(),
                     }
-                    .into())
+                    .into());
                 }
             }
         }

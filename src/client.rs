@@ -1,4 +1,5 @@
 use crate::cmd::{parse_response, ApiError, ApiErrorKind, Cmd, ETagCmd, ProtocolError};
+use crate::resolver_fallback::{GaiResolverWithFallback, NoResolverFallbackCache, ResolverFallbackCache};
 use crate::response::Response;
 use crate::token::{AcquireToken, AcquireToken2Output};
 use crate::types::{AccountId, AuthToken};
@@ -51,6 +52,7 @@ impl Client {
         account_id: AccountId,
         user_agent: &str,
         network_interface: Option<&str>,
+        resolver_fallback_cache: Option<Arc<dyn ResolverFallbackCache>>,
     ) -> anyhow::Result<Self> {
         let mut base_url = base_url.to_string();
         if !base_url.ends_with('/') {
@@ -63,10 +65,14 @@ impl Client {
             .to_string();
         let server_names = once(primary_host).chain(alternative_hosts.iter().cloned());
 
+        let resolver = Arc::new(GaiResolverWithFallback::new(
+            resolver_fallback_cache.unwrap_or(Arc::new(NoResolverFallbackCache())),
+        ));
+
         let mut rustls_config = Self::rustls_config(server_names)?;
-        let http = Self::http_client_builder(user_agent, rustls_config.clone(), network_interface)?;
+        let http = Self::http_client_builder(user_agent, rustls_config.clone(), network_interface, resolver.clone())?;
         rustls_config.enable_sni = false;
-        let http_no_sni = Self::http_client_builder(user_agent, rustls_config, network_interface)?;
+        let http_no_sni = Self::http_client_builder(user_agent, rustls_config, network_interface, resolver)?;
 
         Ok(Self {
             account_id,
@@ -83,12 +89,14 @@ impl Client {
         user_agent: &str,
         rustls_config: rustls::ClientConfig,
         network_interface: Option<&str>,
+        resolver_fallback_cache: Arc<GaiResolverWithFallback>,
     ) -> anyhow::Result<reqwest::Client> {
         let builder = ClientBuilder::new()
             .timeout(Duration::from_secs(60))
             .read_timeout(Duration::from_secs(10))
             .user_agent(user_agent)
-            .use_preconfigured_tls(rustls_config);
+            .use_preconfigured_tls(rustls_config)
+            .dns_resolver(resolver_fallback_cache);
         let builder = match network_interface {
             None => builder,
             Some(network_interface) => builder.interface(network_interface),
