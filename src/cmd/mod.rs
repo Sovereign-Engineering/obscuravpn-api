@@ -18,7 +18,6 @@ pub use cache_wg_key::*;
 pub use exit::*;
 pub use exit2::*;
 use http::HeaderValue;
-use http::StatusCode;
 pub use lightning::*;
 pub use monero::*;
 pub use newsletter_subscribe::*;
@@ -91,6 +90,7 @@ pub enum ApiErrorKind {
     BadRequest {},
     IneligibleForReferral {},
     InternalError {},
+    InvalidAccountId {},
     InvalidReferralCode {},
     MiscUnauthorized {},
     MissingOrInvalidAuthToken {},
@@ -119,7 +119,7 @@ pub struct ProtocolError {
 pub async fn parse_response<T: 'static + DeserializeOwned>(res: reqwest::Response) -> Result<Response<T>, ClientError> {
     let status = res.status();
     let etag = res.headers().get(http::header::ETAG).cloned();
-    if status == StatusCode::NOT_MODIFIED {
+    if status == http::StatusCode::NOT_MODIFIED {
         return Ok(Response::new(None, etag));
     }
     let is_json = res
