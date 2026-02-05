@@ -4,19 +4,9 @@ use serde::{Deserialize, Serialize};
 const CREATE_STRIPE_SUBSCRIPTION_CHECKOUT_PATH: &str = "stripe/create_checkout_session";
 const CREATE_PORTAL_SESSION_CHECKOUT_PATH: &str = "stripe/create_portal_session";
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct CreateStripeSubscriptionCheckout {}
-
-impl Default for CreateStripeSubscriptionCheckout {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl CreateStripeSubscriptionCheckout {
-    pub fn new() -> Self {
-        Self {}
-    }
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct CreateStripeSubscriptionCheckout {
+    pub promo_code: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
