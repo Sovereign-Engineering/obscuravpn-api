@@ -71,6 +71,8 @@ pub struct AccountInfo {
     #[serde(rename = "subscription")]
     pub stripe_subscription: Option<StripeSubscriptionInfo>,
     pub apple_subscription: Option<AppleSubscriptionInfo>,
+    #[serde(default)]
+    pub google_subscription: Option<GoogleSubscriptionInfo>,
     pub monero_pending_payments: Vec<MoneroPaymentInProgress>,
     /// True if the user made any payment in the past.
     pub has_paid: bool,
@@ -145,6 +147,19 @@ pub struct AppleSubscriptionInfo {
     pub auto_renew_status: bool,
     /// Subscription expiration date in seconds since unix epoch
     pub renewal_date: i64,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct GoogleSubscriptionInfo {
+    /// Serialized SubscriptionState (e.g. "ACTIVE", "CANCELED", "IN_GRACE_PERIOD").
+    /// https://developers.google.com/android-publisher/api-ref/rest/v3/purchases.subscriptionsv2#SubscriptionState
+    pub status: String,
+    /// Whether the subscription will renew automatically
+    pub auto_renew_status: bool,
+    /// Subscription expiration date in seconds since unix epoch.
+    /// `None` for `PENDING` subscriptions where Google has not yet
+    /// granted access (and therefore not assigned an expiry).
+    pub expires_at: Option<i64>,
 }
 
 /// The maximum length that a tunnel label can be set to.

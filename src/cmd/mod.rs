@@ -3,6 +3,7 @@ mod apple;
 mod cache_wg_key;
 mod exit;
 mod exit2;
+mod google;
 mod lightning;
 mod monero;
 mod newsletter_subscribe;
@@ -17,6 +18,7 @@ pub use apple::*;
 pub use cache_wg_key::*;
 pub use exit::*;
 pub use exit2::*;
+pub use google::*;
 use http::HeaderValue;
 pub use lightning::*;
 pub use monero::*;
@@ -88,6 +90,7 @@ pub enum ApiErrorKind {
     AlreadyExists {},
     AlreadyReferred {},
     BadRequest {},
+    AssociateAccountConflict {},
     IneligibleForReferral {},
     InternalError {},
     InvalidAccountId {},
