@@ -51,8 +51,8 @@ impl Client {
         alternative_hosts: Vec<String>,
         account_id: AccountId,
         user_agent: &str,
-        #[cfg(not(target_os = "windows"))] network_interface: Option<&str>,
-        #[cfg(target_os = "windows")] network_interface: Option<std::net::IpAddr>,
+        #[cfg(not(any(target_os = "android", target_os = "windows")))] network_interface: Option<&str>,
+        #[cfg(any(target_os = "android", target_os = "windows"))] network_interface: Option<std::net::IpAddr>,
         resolver_fallback_cache: Option<Arc<dyn ResolverFallbackCache>>,
     ) -> anyhow::Result<Self> {
         let mut base_url = base_url.to_string();
@@ -89,8 +89,8 @@ impl Client {
     fn http_client_builder(
         user_agent: &str,
         rustls_config: rustls::ClientConfig,
-        #[cfg(not(target_os = "windows"))] network_interface: Option<&str>,
-        #[cfg(target_os = "windows")] network_interface: Option<std::net::IpAddr>,
+        #[cfg(not(any(target_os = "android", target_os = "windows")))] network_interface: Option<&str>,
+        #[cfg(any(target_os = "android", target_os = "windows"))] network_interface: Option<std::net::IpAddr>,
         resolver_fallback_cache: Arc<GaiResolverWithFallback>,
     ) -> anyhow::Result<reqwest::Client> {
         let builder = ClientBuilder::new()
@@ -101,9 +101,9 @@ impl Client {
             .dns_resolver(resolver_fallback_cache);
         let builder = match network_interface {
             None => builder,
-            #[cfg(not(target_os = "windows"))]
+            #[cfg(not(any(target_os = "android", target_os = "windows")))]
             Some(network_interface) => builder.interface(network_interface),
-            #[cfg(target_os = "windows")]
+            #[cfg(any(target_os = "android", target_os = "windows"))]
             Some(network_interface) => builder.local_address(network_interface),
         };
         builder.build().context("failed to initialize HTTP client")
