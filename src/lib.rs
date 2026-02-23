@@ -16,6 +16,7 @@ pub mod relay_protocol;
 mod resolver_fallback;
 #[cfg(feature = "client")]
 mod response;
+pub mod wg_fragment;
 
 #[cfg(feature = "client")]
 pub use client::Client;
