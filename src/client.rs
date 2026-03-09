@@ -1,11 +1,11 @@
 use crate::cmd::{parse_response, ApiError, ApiErrorKind, Cmd, ETagCmd, ProtocolError};
-use crate::resolver_fallback::{GaiResolverWithFallback, NoResolverFallbackCache, ResolverFallbackCache};
 use crate::response::Response;
 use crate::token::{AcquireToken, AcquireToken2Output};
 use crate::types::{AccountId, AuthToken};
 use anyhow::{anyhow, Context};
 use http::HeaderValue;
 use itertools::Itertools;
+use reqwest::dns::Resolve;
 use reqwest::ClientBuilder;
 use rustls::client::WebPkiServerVerifier;
 use std::iter::once;
@@ -53,7 +53,7 @@ impl Client {
         user_agent: &str,
         #[cfg(not(any(target_os = "android", target_os = "windows")))] network_interface: Option<&str>,
         #[cfg(any(target_os = "android", target_os = "windows"))] network_interface: Option<std::net::IpAddr>,
-        resolver_fallback_cache: Option<Arc<dyn ResolverFallbackCache>>,
+        resolver: Option<Arc<dyn Resolve>>,
     ) -> anyhow::Result<Self> {
         let mut base_url = base_url.to_string();
         if !base_url.ends_with('/') {
@@ -65,10 +65,6 @@ impl Client {
             .context("base url does not contain host")?
             .to_string();
         let server_names = once(primary_host).chain(alternative_hosts.iter().cloned());
-
-        let resolver = Arc::new(GaiResolverWithFallback::new(
-            resolver_fallback_cache.unwrap_or(Arc::new(NoResolverFallbackCache())),
-        ));
 
         let mut rustls_config = Self::rustls_config(server_names)?;
         let http = Self::http_client_builder(user_agent, rustls_config.clone(), network_interface, resolver.clone())?;
@@ -91,14 +87,17 @@ impl Client {
         rustls_config: rustls::ClientConfig,
         #[cfg(not(any(target_os = "android", target_os = "windows")))] network_interface: Option<&str>,
         #[cfg(any(target_os = "android", target_os = "windows"))] network_interface: Option<std::net::IpAddr>,
-        resolver_fallback_cache: Arc<GaiResolverWithFallback>,
+        resolver: Option<Arc<dyn Resolve>>,
     ) -> anyhow::Result<reqwest::Client> {
         let builder = ClientBuilder::new()
             .timeout(Duration::from_secs(60))
             .read_timeout(Duration::from_secs(10))
             .user_agent(user_agent)
-            .use_preconfigured_tls(rustls_config)
-            .dns_resolver(resolver_fallback_cache);
+            .use_preconfigured_tls(rustls_config);
+        let builder = match resolver {
+            None => builder,
+            Some(resolver) => builder.dns_resolver(resolver),
+        };
         let builder = match network_interface {
             None => builder,
             #[cfg(not(any(target_os = "android", target_os = "windows")))]
