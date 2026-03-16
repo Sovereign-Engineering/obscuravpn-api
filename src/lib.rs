@@ -13,8 +13,6 @@ mod client;
 pub mod notices;
 pub mod relay_protocol;
 #[cfg(feature = "client")]
-mod resolver_fallback;
-#[cfg(feature = "client")]
 mod response;
 pub mod wg_fragment;
 
@@ -23,8 +21,9 @@ pub use client::Client;
 #[cfg(feature = "client")]
 pub use client::ClientError;
 #[cfg(feature = "client")]
-pub use resolver_fallback::ResolverFallbackCache;
-#[cfg(feature = "client")]
 pub use response::Response;
 #[cfg(feature = "client")]
-pub use rustls;
+pub mod reexports {
+    pub use reqwest;
+    pub use rustls;
+}

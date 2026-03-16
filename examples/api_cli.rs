@@ -80,9 +80,6 @@ async fn main() -> anyhow::Result<()> {
     let url = args.base_url;
     let account_id = AccountId::from_string_unchecked(args.account_no);
 
-    rustls::crypto::ring::default_provider()
-        .install_default()
-        .expect("Failed to install rustls crypto provider");
     let client = Client::new(url, vec![], account_id, "example cli client", None, None)?;
 
     eprintln!("Get account info");
