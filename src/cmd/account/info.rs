@@ -20,6 +20,7 @@ fn test_account_info_json() {
           "top_up": { "credit_expires_at": 1000 },
           "subscription": null,
           "apple_subscription": null,
+          "google_subscription": null,
           "monero_pending_payments": [{
             "id": "asdas",
             "status": "confirming"
