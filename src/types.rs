@@ -151,7 +151,7 @@ pub struct AppleSubscriptionInfo {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct GoogleSubscriptionInfo {
-    /// Serialized SubscriptionState (e.g. "ACTIVE", "CANCELED", "IN_GRACE_PERIOD").
+    /// Serialized SubscriptionState (e.g. "SUBSCRIPTION_STATE_ACTIVE", "SUBSCRIPTION_STATE_CANCELED", "SUBSCRIPTION_STATE_IN_GRACE_PERIOD").
     /// https://developers.google.com/android-publisher/api-ref/rest/v3/purchases.subscriptionsv2#SubscriptionState
     pub status: String,
     /// Whether the subscription will renew automatically
