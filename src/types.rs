@@ -154,6 +154,8 @@ pub struct GoogleSubscriptionInfo {
     /// Serialized SubscriptionState (e.g. "SUBSCRIPTION_STATE_ACTIVE", "SUBSCRIPTION_STATE_CANCELED", "SUBSCRIPTION_STATE_IN_GRACE_PERIOD").
     /// https://developers.google.com/android-publisher/api-ref/rest/v3/purchases.subscriptionsv2#SubscriptionState
     pub status: String,
+    /// Whether the subscription is active
+    pub active: bool,
     /// Whether the subscription will renew automatically
     pub auto_renew_status: bool,
     /// Subscription expiration date in seconds since unix epoch.
