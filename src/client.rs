@@ -1,12 +1,13 @@
-use crate::cmd::{parse_response, ApiError, ApiErrorKind, Cmd, ETagCmd, ProtocolError};
+use crate::cmd::{ApiError, ApiErrorBody, ApiErrorKind, Cmd, ETagCmd, ProtocolError, parse_response};
+use crate::pow::PowOutput;
 use crate::response::Response;
 use crate::token::{AcquireToken, AcquireToken2Output};
 use crate::types::{AccountId, AuthToken};
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use http::HeaderValue;
 use itertools::Itertools;
-use reqwest::dns::Resolve;
 use reqwest::ClientBuilder;
+use reqwest::dns::Resolve;
 use rustls::client::WebPkiServerVerifier;
 use std::iter::once;
 use std::sync::Arc;
@@ -43,7 +44,13 @@ pub enum ClientError {
     ProtocolError(#[from] ProtocolError),
     #[error("error executing request: {0}")]
     RequestExecError(#[from] reqwest::Error),
+    #[error("proof of work timed out")]
+    ProofOfWorkTimeout,
+    #[error("proof of work failed: {0}")]
+    ProofOfWork(argon2::Error),
 }
+
+const POW_SOLVE_TIMEOUT: Duration = Duration::from_secs(10);
 
 impl Client {
     pub fn new(
@@ -131,15 +138,59 @@ impl Client {
                 url_override: None,
             });
         }
-        let account_id = self.account_id.clone();
-        let request = AcquireToken { account_id }.to_request2(&self.base_url)?;
-        let res = self.send_http(request).await?;
-        let res = parse_response::<AcquireToken2Output>(res).await?;
+        let res = self.request_token(&self.account_id).await?;
         let body = res.into_body().context("No auth token in response")?;
         self.set_auth_token(Some(body.auth_token.clone().into()));
 
         drop(acquiring_auth_token);
         Ok(body)
+    }
+
+    async fn request_token(&self, account_id: &AccountId) -> Result<Response<AcquireToken2Output>, ClientError> {
+        let run_request = async |pow: Option<PowOutput>| {
+            let request = AcquireToken {
+                account_id: account_id.clone(),
+                pow,
+            }
+            .to_request2(&self.base_url)?;
+            let res = self.send_http(request).await?;
+            parse_response::<AcquireToken2Output>(res).await
+        };
+        let mut pow = None;
+        for _ in 0..2 {
+            match run_request(pow).await {
+                Err(ClientError::ApiError(ApiError {
+                    status: _,
+                    body:
+                        ApiErrorBody {
+                            error:
+                                ApiErrorKind::RateLimitExceeded {
+                                    pow_challenge: Some(pow_challenge),
+                                }
+                                | ApiErrorKind::SignupLimitExceeded {
+                                    pow_challenge: Some(pow_challenge),
+                                },
+                            msg: _,
+                            detail: _,
+                        },
+                })) => {
+                    tracing::warn!(
+                        message_id = "Kp9xZ2mW",
+                        puzzles = pow_challenge.puzzles,
+                        threshold = %hex::encode(pow_challenge.threshold.0),
+                        "rate limited, solving proof of work",
+                    );
+                    let solved = tokio::time::timeout(POW_SOLVE_TIMEOUT, pow_challenge.solve())
+                        .await
+                        .map_err(|_| ClientError::ProofOfWorkTimeout)?
+                        .map_err(ClientError::ProofOfWork)?;
+                    tracing::info!(message_id = "Tg4nB7vC", "proof of work solved");
+                    pow = Some(solved);
+                }
+                res => return res,
+            }
+        }
+        run_request(pow).await
     }
 
     pub fn get_auth_token(&self) -> Option<AuthToken> {

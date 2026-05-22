@@ -44,6 +44,12 @@ async fn main() -> anyhow::Result<()> {
             ClientError::ResponseTooLarge => {
                 bail!("response too large");
             }
+            ClientError::ProofOfWorkTimeout => {
+                bail!("proof of work timed out");
+            }
+            ClientError::ProofOfWork(error) => {
+                bail!("proof of work failed: {error}");
+            }
             ClientError::Other(error) => {
                 bail!("other error: {:?}", error);
             }

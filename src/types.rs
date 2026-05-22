@@ -19,6 +19,10 @@ impl AccountId {
         AccountId(id)
     }
 
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+
     // The digit portion of the account hint.
     pub fn hint(&self) -> &str {
         // We don't currently enforce correctness for the account ID so this method needs to be forgiving.
@@ -261,7 +265,7 @@ pub struct WgPubkey(#[serde_as(as = "Base64")] pub [u8; WG_PUBKEY_LENGTH]);
 
 impl std::fmt::Debug for WgPubkey {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        use base64::{engine::general_purpose::STANDARD, Engine as _};
+        use base64::{Engine as _, engine::general_purpose::STANDARD};
         f.debug_tuple("WgPubKey").field(&STANDARD.encode(self.0)).finish()
     }
 }
@@ -277,7 +281,7 @@ pub enum ParseWgPubkeyError {
 impl FromStr for WgPubkey {
     type Err = ParseWgPubkeyError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        use base64::{engine::general_purpose::STANDARD, Engine as _};
+        use base64::{Engine as _, engine::general_purpose::STANDARD};
         let decoded = STANDARD.decode(s)?;
         let bytes = decoded.try_into().map_err(|d: Vec<u8>| ParseWgPubkeyError::InvalidLength(d.len()))?;
         Ok(WgPubkey(bytes))

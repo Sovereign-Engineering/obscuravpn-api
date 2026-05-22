@@ -1,10 +1,10 @@
 use anyhow::bail;
-use base64::{engine::general_purpose::STANDARD, Engine as _};
+use base64::{Engine as _, engine::general_purpose::STANDARD};
 use clap::{Parser, Subcommand};
+use obscuravpn_api::Client;
 use obscuravpn_api::cmd::*;
 use obscuravpn_api::types::{AccountId, TunnelConfig, WgPubkey};
 use obscuravpn_api::wg_conf::build_wg_conf;
-use obscuravpn_api::Client;
 use qrcode::QrCode;
 use rand::rngs::OsRng;
 use x25519_dalek::{PublicKey, StaticSecret};

@@ -1,7 +1,7 @@
 [package]
 name = "obscuravpn-api"
 version = "0.0.0"
-edition = "2021"
+edition = "2024"
 
 description = "API client for Obscura VPN."
 homepage = "https://github.com/Sovereign-Engineering/obscuravpn-api"
@@ -10,9 +10,11 @@ repository = "https://github.com/Sovereign-Engineering/obscuravpn-api"
 
 [dependencies]
 anyhow = "1.0.98"
+argon2 = "0.5"
 base64 = "0.22.1"
 bytes = "1.10.1"
 derive_more = {  version = "2.0.1", features = ["full"] }
+hex = "0.4.3"
 http = { version = "1.3.1" }
 ipnetwork = { version =  "0.21.1", features = ["serde"] }
 itertools = "0.14.0"
@@ -22,7 +24,7 @@ rustls = { version = "0.23.27", optional = true }
 semver = "1.0.26"
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0.140"
-serde_with = { version = "3.12.0", features = ["base64"] }
+serde_with = { version = "3.12.0", features = ["base64", "hex"] }
 static_assertions = "1.1.0"
 strum = { version = "0.27.1", features = ["derive"] }
 thiserror = "2.0.12"
@@ -36,7 +38,7 @@ x509-parser = "0.17.0"
 
 [features]
 default = ["client"]
-client = ["reqwest", "rustls", "webpki-roots"]
+client = ["reqwest", "rustls", "webpki-roots", "tokio/rt", "tokio/time"]
 server = []
 
 [dev-dependencies]

@@ -31,14 +31,15 @@ pub use tunnel::*;
 
 use std::any::Any;
 
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use thiserror::Error;
 use tokio_stream::StreamExt;
 use url::Url;
 
+use crate::ClientError;
+use crate::pow::PowParams;
 use crate::response::Response;
 use crate::types::AuthToken;
-use crate::ClientError;
 
 pub trait Cmd: Serialize + DeserializeOwned + std::fmt::Debug {
     type Output: Serialize + DeserializeOwned + 'static + std::fmt::Debug;
@@ -102,9 +103,13 @@ pub enum ApiErrorKind {
     NoApiRoute {},
     NoLongerSupported {},
     NoMatchingExit {},
-    RateLimitExceeded {},
+    RateLimitExceeded {
+        pow_challenge: Option<PowParams>,
+    },
     SaleNotFound {},
-    SignupLimitExceeded {},
+    SignupLimitExceeded {
+        pow_challenge: Option<PowParams>,
+    },
     TunnelLimitExceeded {},
     WgKeyRotationRequired {},
 
@@ -299,5 +304,47 @@ fn check_err_json() {
             msg: "Helpful message".into(),
             detail: None,
         }
+    );
+}
+
+#[test]
+fn rate_limit_pow_challenge_json() {
+    use crate::pow::PowDigest;
+    let body = ApiErrorBody {
+        error: ApiErrorKind::RateLimitExceeded {
+            pow_challenge: Some(PowParams {
+                nonce: "abc123".into(),
+                threshold: PowDigest([0xab; 32]),
+                puzzles: 3,
+            }),
+        },
+        msg: "Rate limit exceeded".into(),
+        detail: None,
+    };
+
+    assert_eq!(
+        serde_json::to_string(&body).unwrap(),
+        r#"{"error":{"RateLimitExceeded":{"pow_challenge":{"nonce":"abc123","threshold":"abababababababababababababababababababababababababababababababab","puzzles":3}}},"msg":"Rate limit exceeded"}"#,
+    );
+
+    assert_eq!(
+        serde_json::from_str::<ApiErrorBody>(
+            r#"
+            {
+                "error": {
+                    "RateLimitExceeded": {
+                        "pow_challenge": {
+                            "nonce": "abc123",
+                            "threshold": "abababababababababababababababababababababababababababababababab",
+                            "puzzles": 3
+                        }
+                    }
+                },
+                "msg": "Rate limit exceeded"
+            }
+        "#
+        )
+        .unwrap(),
+        body
     );
 }

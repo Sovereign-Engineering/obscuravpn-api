@@ -1,4 +1,4 @@
-use super::{usize_from, WgFragmentHeaderData, WG_FRAGMENT_MESSAGE_HEADER_SIZE};
+use super::{WG_FRAGMENT_MESSAGE_HEADER_SIZE, WgFragmentHeaderData, usize_from};
 use bytes::Bytes;
 use std::num::NonZeroU32;
 

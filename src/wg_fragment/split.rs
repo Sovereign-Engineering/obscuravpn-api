@@ -1,4 +1,4 @@
-use super::{WgFragmentHeaderData, WG_FRAGMENT_MESSAGE_HEADER_SIZE};
+use super::{WG_FRAGMENT_MESSAGE_HEADER_SIZE, WgFragmentHeaderData};
 use bytes::Bytes;
 
 #[derive(Debug, Default)]

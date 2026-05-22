@@ -1,7 +1,7 @@
+use crate::pow::PowOutput;
+use crate::types::AccountId;
 use serde::{Deserialize, Serialize};
 use url::Url;
-
-use crate::types::AccountId;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct UrlOverride {
@@ -18,6 +18,7 @@ pub struct AcquireToken2Output {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AcquireToken {
     pub account_id: AccountId,
+    pub pow: Option<PowOutput>,
 }
 
 impl AcquireToken {
@@ -33,7 +34,14 @@ impl AcquireToken {
 fn test_json() {
     let json = r#"
     {
-      "account_id": "0000000000000000000"
+      "account_id": "0000000000000000000",
+      "pow": {
+        "nonce": "f0e1d2c3b4a5",
+        "solutions": [
+          "000000000000002a",
+          "0000000000000457"
+        ]
+      }
     }
     "#;
     check_json(json);

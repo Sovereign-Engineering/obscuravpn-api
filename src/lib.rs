@@ -11,6 +11,7 @@ pub mod wg_conf;
 mod client;
 #[cfg(feature = "client")]
 pub mod notices;
+pub mod pow;
 pub mod relay_protocol;
 #[cfg(feature = "client")]
 mod response;
