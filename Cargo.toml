@@ -1,6 +1,6 @@
 [package]
 name = "obscuravpn-api"
-version = "0.0.0"
+version = "1.0.0"
 edition = "2021"
 
 description = "API client for Obscura VPN."
