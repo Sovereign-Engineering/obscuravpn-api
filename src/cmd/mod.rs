@@ -95,6 +95,7 @@ pub enum ApiErrorKind {
     InternalError {},
     InvalidAccountId {},
     InvalidReferralCode {},
+    LightningTopUpNotFound {},
     MiscUnauthorized {},
     MissingOrInvalidAuthToken {},
     MoneroTopUpNotFound {},
