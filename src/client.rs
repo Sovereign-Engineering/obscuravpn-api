@@ -138,6 +138,9 @@ impl Client {
                 url_override: None,
             });
         }
+
+        tracing::info!(message_id = "xah8Usoo", "Acquiring auth token.");
+
         let res = self.request_token(&self.account_id).await?;
         let body = res.into_body().context("No auth token in response")?;
         self.set_auth_token(Some(body.auth_token.clone().into()));
@@ -289,7 +292,17 @@ impl Client {
         match parse_response(res).await {
             Ok(output) => Ok(Some(output)),
             Err(ClientError::ApiError(error)) => match error.body.error {
-                ApiErrorKind::MissingOrInvalidAuthToken {} => Ok(None),
+                ApiErrorKind::MissingOrInvalidAuthToken {} => {
+                    tracing::warn!(
+                        message_id = "Oroo1Xah",
+                        http.response.status_code = error.status.as_u16(),
+                        detail = error.body.detail,
+                        error = error.body.msg,
+                        error.type = "MissingOrInvalidAuthToken",
+                        "Auth token rejected."
+                    );
+                    Ok(None)
+                }
                 _ => Err(ClientError::ApiError(error)),
             },
             Err(err) => Err(err),
