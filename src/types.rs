@@ -71,13 +71,13 @@ pub struct AccountInfo {
     pub id: AccountId,
     pub active: bool,
     pub top_up: Option<TopUp>,
-    // TODO: Rename this field if we ever bump the API version
-    #[serde(rename = "subscription")]
-    pub stripe_subscription: Option<StripeSubscriptionInfo>,
     pub apple_subscription: Option<AppleSubscriptionInfo>,
     #[serde(default)]
     pub google_subscription: Option<GoogleSubscriptionInfo>,
     pub monero_pending_payments: Vec<MoneroPaymentInProgress>,
+    pub stripe_subscription: Option<StripeSubscriptionInfo>,
+    #[cfg(feature = "server")]
+    pub subscription: Option<StripeSubscriptionInfo>,
     /// True if the user made any payment in the past.
     pub has_paid: bool,
     pub free_month_on_next_payment: bool,
