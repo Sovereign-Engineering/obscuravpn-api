@@ -99,11 +99,13 @@ pub struct AccountInfo {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct TopUp {
+    pub active: bool,
     pub credit_expires_at: i64,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct StripeSubscriptionInfo {
+    pub active: bool,
     /// string repr of [`stripe::SubscriptionStatus`][https://docs.rs/async-stripe/latest/stripe/enum.SubscriptionStatus.html]
     pub status: String,
     /// period start in seconds since unix epoch
@@ -112,17 +114,6 @@ pub struct StripeSubscriptionInfo {
     pub current_period_end: i64,
     /// whether the subscription will end at this period
     pub cancel_at_period_end: bool,
-}
-
-impl StripeSubscriptionInfo {
-    pub fn new(status: String, current_period_start: i64, current_period_end: i64, cancel_at_period_end: bool) -> Self {
-        Self {
-            status,
-            current_period_start,
-            current_period_end,
-            cancel_at_period_end,
-        }
-    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Ord, PartialOrd, Deserialize, Serialize)]
@@ -145,6 +136,7 @@ impl SubscriptionTarget {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct AppleSubscriptionInfo {
+    pub active: bool,
     /// https://developer.apple.com/documentation/appstoreserverapi/status
     pub status: u8,
     /// Whether the subscription will renew automatically
