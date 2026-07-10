@@ -75,6 +75,16 @@ pub struct AccountInfo {
     #[serde(default)]
     pub google_subscription: Option<GoogleSubscriptionInfo>,
     pub monero_pending_payments: Vec<MoneroPaymentInProgress>,
+
+    /// The most relevant funding method for the account.
+    ///
+    /// This is not specifically defined and the policy may change over time as payment methods and implementations change. However it is the go-to field for what funding method should be highlighted in any sort of interface that doesn't list them all.
+    ///
+    /// Invariants:
+    /// - If the account is active this will point at an active method.
+    /// - If this is `None` the account has never been funded or hasn't been funded recently.
+    pub primary_funding: Option<FundingMethod>,
+
     pub stripe_subscription: Option<StripeSubscriptionInfo>,
     #[cfg(feature = "server")]
     pub subscription: Option<StripeSubscriptionInfo>,
@@ -95,6 +105,44 @@ pub struct AccountInfo {
     pub current_expiry: Option<i64>,
     /// When auto-renewing, this is the renewal date
     pub auto_renews: Option<i64>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum FundingMethod {
+    AppleSubscription,
+    GoogleSubscription,
+    StripeSubscription,
+    TopUp,
+
+    /// The client doesn't understand the funding method. Never emitted.
+    #[serde(other)]
+    Unknown,
+}
+
+#[test]
+fn test_funding_method() {
+    assert_eq!(serde_json::to_string(&FundingMethod::TopUp).unwrap(), r#""top_up""#,);
+
+    assert_eq!(
+        serde_json::from_str::<FundingMethod>(
+            r#"
+                "top_up"
+            "#
+        )
+        .unwrap(),
+        FundingMethod::TopUp,
+    );
+
+    assert_eq!(
+        serde_json::from_str::<FundingMethod>(
+            r#"
+                "snail_mail"
+            "#
+        )
+        .unwrap(),
+        FundingMethod::Unknown,
+    );
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

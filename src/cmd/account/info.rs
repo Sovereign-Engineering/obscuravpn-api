@@ -25,6 +25,7 @@ fn test_account_info_json() {
           "subscription": null,
           "apple_subscription": null,
           "google_subscription": null,
+          "primary_funding": "top_up",
           "monero_pending_payments": [{
             "id": "asdas",
             "status": "confirming"
