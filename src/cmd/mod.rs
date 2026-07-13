@@ -77,42 +77,135 @@ pub struct ApiError {
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct ApiErrorBody {
+    /// Typed error codes.
+    ///
+    /// This is the machine-readable component of the error. All other fields are human-readable and unstable.
+    ///
+    /// Note that the serialization is `{"ErrorCode": detail}`. For example:
+    ///
+    /// ```json
+    /// {
+    ///     "RateLimitExceeded": {
+    ///         "pow_challenge": {
+    ///             "nonce": "abc",
+    ///             "threshold": "000...",
+    ///             "puzzles": 10,
+    ///         }
+    ///     }
+    /// }
+    /// ```
     pub error: ApiErrorKind,
+
+    /// User-readable message.
+    ///
+    /// This is a message that is suitable for showing to the end-user if the application does not have specific error handling for this error. It should be used rather than a generic "Unexpected error".
+    ///
+    /// Note: This is currently always English. In the future the `Accept-Language` header may be used to provide a localized error.
     pub msg: String,
 
     /// Debugging information, not intended for end-users.
+    ///
+    /// It is a good idea to log this, especially if the error is unexpected or otherwise unhandled. It isn't expected to be helpful to the end-user.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub detail: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub enum ApiErrorKind {
+    /// Account not active.
+    ///
+    /// The account is not active (funded) but tried to do an action that requires a funded account.
     AccountExpired {},
-    AlreadyExists {},
+
+    /// This account already has a referrer.
     AlreadyReferred {},
-    BadRequest {},
+
     AssociateAccountConflict {},
+
+    /// The request doesn't satisfy the preconditions.
+    BadRequest {},
+
+    /// This account is not eligible to have a referrer linked.
     IneligibleForReferral {},
+
+    /// An internal error occurred.
+    ///
+    /// You may retry with exponential backoff and jitter.
     InternalError {},
+
+    /// The provided account ID is syntactically incorrect.
     InvalidAccountId {},
+
+    /// The referral code doesn't exist.
+    ///
+    /// As a special case this also occurs for a self-referral attempt.
     InvalidReferralCode {},
+
     LightningTopUpNotFound {},
     MiscUnauthorized {},
+
+    /// The request requires authentication which was not satisfactory.
+    ///
+    /// You must [authenticate](crate::doc::auth) then retry with authentication. If this request was authenticated the credential is expired or incorrect and you must log in again.
     MissingOrInvalidAuthToken {},
+
     MoneroTopUpNotFound {},
+
+    /// Attempt to call an API route which doesn't exist.
+    ///
+    /// Notably this is different than calling a valid route for a resource that doesn't exist. You typoed the URL.
     NoApiRoute {},
+
+    /// Your client is no longer supported.
+    ///
+    /// Either you are using parameters that are no longer supported or the response format has changed in an incompatible way. You need to update your client to the new API.
     NoLongerSupported {},
+
+    /// No exit matched the requested filters.
     NoMatchingExit {},
+
+    /// Rate limit exceeded.
+    ///
+    /// The request was not fulfilled as it was attempting to do some action too often.
+    ///
+    /// For endpoints that require authentication this is almost certainly a per-account limit. For requests that don't require authentication this is probably a global limit.
+    ///
+    /// You may retry with exponential backoff and jitter.
     RateLimitExceeded {
+        /// Proof-of-work challenge.
+        ///
+        /// If set this request may be retried with the solution to this challenge. Currently PoW is only available on authentication token requests.
         pow_challenge: Option<PowParams>,
     },
+
+    /// A purchase was attempted to be made with a specific offer that is not valid.
+    ///
+    /// If you are very unlucky it just expired, but this should never happen due to grace periods. Refresh the price list and try again.
     SaleNotFound {},
+
+    /// Obscura is not currently accepting new accounts.
+    ///
+    /// You may retry with exponential backoff and jitter.
     SignupLimitExceeded {
+        /// Proof-of-work challenge.
+        ///
+        /// This may be used to bypass the signup limit.
         pow_challenge: Option<PowParams>,
     },
+
+    /// Your account has created more tunnels than allowed.
+    ///
+    /// Delete another tunnel and retry.
     TunnelLimitExceeded {},
+
+    /// Your WireGuard key can't be used.
+    ///
+    /// Generate a new one and retry.
     WgKeyRotationRequired {},
 
+    /// Unknown error kind.
+    ///
+    /// This is never emitted. Used for forwards-compatibility on the client.
     #[serde(untagged)]
     Unknown(serde_json::Value),
 }

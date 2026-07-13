@@ -11,5 +11,5 @@ impl Cmd for DeleteAccount {
     type Output = DeleteAccountOutput;
 
     const METHOD: http::Method = http::Method::DELETE;
-    const PATH: &'static str = super::PATH;
+    const PATH: &'static str = "account";
 }

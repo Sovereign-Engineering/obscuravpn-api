@@ -5,19 +5,35 @@
     nixpkgs.url = "nixpkgs/nixos-25.05";
   };
 
-  outputs = { self, crane, nixpkgs, flake-utils }:
+  outputs = { self, crane, nixpkgs, flake-utils }@inputs:
     flake-utils.lib.eachDefaultSystem (system:
       let
-        pkgs = import nixpkgs { inherit system; };
-        craneLib = crane.mkLib pkgs;
+        nixpkgs = import inputs.nixpkgs { inherit system; };
+        inherit (nixpkgs) lib pkgs;
+        craneLib = crane.mkLib nixpkgs;
 
         depsArgs = {
-          src = craneLib.cleanCargoSource self;
+          src = lib.fileset.toSource {
+            root = ./.;
+            fileset = lib.fileset.unions [
+              ./about.toml
+              ./Cargo.lock
+              ./Cargo.toml
+              ./doc
+              ./rust-toolchain.toml
+              ./rustfmt.toml
+              ./src
+            ];
+          };
           strictDeps = true;
         };
         cargoArgs = depsArgs // { cargoArtifacts = craneLib.buildDepsOnly depsArgs; };
+
+        doc = craneLib.cargoDoc (cargoArgs // { RUSTDOCFLAGS = "-Dwarnings"; });
       in {
         checks = {
+          inherit doc;
+
           actionlint = pkgs.runCommand "actionlint" { nativeBuildInputs = [ pkgs.actionlint ]; } ''
             actionlint -config-file ${./.github}/actionlint.yml ${./.github}/**/*.yml
             touch "$out"
@@ -52,5 +68,7 @@
             export OBSCURA_MAGIC_IN_NIX_SHELL=1
           '';
         };
+
+        packages = { inherit doc; };
       });
 }

@@ -3,6 +3,8 @@ extern crate core;
 
 pub mod check;
 pub mod cmd;
+pub mod doc;
+pub mod time;
 pub mod token;
 pub mod types;
 pub mod wg_conf;
