@@ -13,6 +13,7 @@ This API is only officially supported for our partners. If you are interested in
 This documentation will be critical to understanding how to manage funding.
 
 - [Account Number](crate::types::AccountId)
+- [Account Creation](crate::cmd::CreateAccount)
 - [Authentication](crate::doc::auth)
 - [Errors](crate::doc::error)
 - [Making Requests](crate::doc::requests)

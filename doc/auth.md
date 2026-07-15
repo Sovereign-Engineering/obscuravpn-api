@@ -2,7 +2,7 @@
 
 Authentication is a simple process.
 
-1. [Create an account](crate::doc::account_creation).
+1. [Create an account](crate::cmd::CreateAccount).
 2. [Exchange Account Number for an auth token](crate::token::AcquireToken).
 3. [Make requests with the auth token.](crate::token::AcquireToken2Output::auth_token)
 

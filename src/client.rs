@@ -125,7 +125,7 @@ impl Client {
     pub async fn acquire_auth_token(&self) -> Result<AcquireToken2Output, ClientError> {
         if let Some(auth_token) = self.get_auth_token() {
             return Ok(AcquireToken2Output {
-                auth_token: auth_token.into(),
+                auth_token,
                 url_override: None,
             });
         }
@@ -134,7 +134,7 @@ impl Client {
 
         if let Some(auth_token) = self.get_auth_token() {
             return Ok(AcquireToken2Output {
-                auth_token: auth_token.into(),
+                auth_token,
                 url_override: None,
             });
         }
@@ -143,7 +143,7 @@ impl Client {
 
         let res = self.request_token(&self.account_id).await?;
         let body = res.into_body().context("No auth token in response")?;
-        self.set_auth_token(Some(body.auth_token.clone().into()));
+        self.set_auth_token(Some(body.auth_token.clone()));
 
         drop(acquiring_auth_token);
         Ok(body)
@@ -270,7 +270,7 @@ impl Client {
             .transpose()
             .map_err(|_| ClientError::InvalidHeaderValue)?;
         for _ in 0..3 {
-            let auth_token = self.acquire_auth_token().await?.auth_token.into();
+            let auth_token = self.acquire_auth_token().await?.auth_token;
             if let Some(output) = self.run_once::<C>(&cmd, &auth_token, etag.clone()).await? {
                 return Ok(output);
             }

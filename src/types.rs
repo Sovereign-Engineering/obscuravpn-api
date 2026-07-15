@@ -9,7 +9,7 @@ use serde_with::base64::Base64;
 use serde_with::serde_as;
 use thiserror::Error;
 
-use crate::cmd::{MoneroPaymentStatus, MoneroTopUpId};
+use crate::cmd::{MoneroPaymentStatus, MoneroTopUpId, ReferralCode};
 use crate::time::Timestamp;
 
 /// Account Number
@@ -193,7 +193,7 @@ pub struct AccountInfo {
     /// A code the user can use to refer another user.
     ///
     /// For sharing the URL `https://obscura.com/refer#{code}` can be used.
-    pub referral_code: String,
+    pub referral_code: ReferralCode,
 
     pub stripe_subscription: Option<StripeSubscriptionInfo>,
     #[cfg(feature = "server")]
@@ -583,7 +583,7 @@ fn serde_wg_enc_dec() {
     assert_eq!(base64_from_pk, base64);
 }
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub struct AuthToken(String);
 
 impl AuthToken {

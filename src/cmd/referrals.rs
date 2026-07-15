@@ -3,8 +3,11 @@ use serde::{Deserialize, Serialize};
 use super::Cmd;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ReferralCode(pub String);
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct UseReferralCode {
-    pub code: String,
+    pub code: ReferralCode,
 }
 
 impl Cmd for UseReferralCode {
