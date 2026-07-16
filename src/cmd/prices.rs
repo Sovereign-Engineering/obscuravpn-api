@@ -2,19 +2,26 @@ use super::Cmd;
 use crate::{cmd::ETagCmd, types::Prices};
 use serde::{Deserialize, Serialize};
 
-const PRICES_PATH: &str = "prices";
-
-// WARN: Client doesn't support GET parameters
+/// List Prices
+///
+/// ## Expected Errors
+///
+/// None
+///
+/// <div class=warning>The Rust client doesn't support GET parameters so can't use this call.</div>
 // https://linear.app/soveng/issue/OBS-2002/support-get-query-parameters-in-rust-api-client
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ListPrices {
+    /// The promo code for which to fetch prices.
+    ///
+    /// If this code is invalid or expired the request will still succeed with the regular prices.
     pub code: Option<String>,
 }
 
 impl Cmd for ListPrices {
     type Output = Prices;
     const METHOD: http::Method = http::Method::GET;
-    const PATH: &'static str = PRICES_PATH;
+    const PATH: &'static str = "prices";
 }
 
 impl ETagCmd for ListPrices {}

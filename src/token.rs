@@ -9,15 +9,36 @@ pub struct UrlOverride {
     pub web: String,
 }
 
+/// Response of auth request.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct AcquireToken2Output {
+    /// The auth token.
+    ///
+    /// The token is used by adding an `Authorization: Bearer {token}` header to your requests.
+    ///
+    /// The token has no definite expiry date. It is recommended to cache tokens indefinitely, only acquiring a new one when the API returns a [`MissingOrInvalidAuthToken`](crate::cmd::ApiErrorKind::MissingOrInvalidAuthToken) error.
     pub auth_token: String,
+
+    /// Internal use.
     pub url_override: Option<UrlOverride>,
 }
 
+/// Acquire an auth token.
+///
+/// This body should be sent as the JSON body of a `POST` request to the `/api/token2` endpoint.
+///
+/// The response is an [`AcquireToken2Output`].
+///
+/// ## Expected Errors
+///
+/// - [`InvalidAccountId`](crate::cmd::ApiErrorKind::InvalidAccountId) is returned if the Account Number is syntactically invalid.
+/// - [`RateLimitExceeded`](crate::cmd::ApiErrorKind::RateLimitExceeded) can happen for new accounts or when logging into a different account. It means that Obscura is being DoSed and needs to reject new logins.
+/// - [`SignupLimitExceeded`](crate::cmd::ApiErrorKind::SignupLimitExceeded) can happen when creating a new account. New accounts are not currently being issued.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AcquireToken {
     pub account_id: AccountId,
+
+    /// Proof-of-work Challenge to Bypass Rate Limits
     pub pow: Option<PowOutput>,
 }
 

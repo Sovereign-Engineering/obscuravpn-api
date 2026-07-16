@@ -8,9 +8,13 @@ jobs:
   build_all:
     name: Build All
     runs-on: [nix]
+    permissions:
+      # contents: read    # to checkout the git repo
+      pages: write
+      id-token: write # Required for actions/deploy-pages
     steps:
       - name: git checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Build Nix
         shell: bash
@@ -20,3 +24,10 @@ jobs:
             --no-update-lock-file \
             --print-build-logs \
             --show-trace
+          nix build '.#doc' --no-update-lock-file
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: result/share/doc/
+      - uses: actions/deploy-pages@v5
+        if: ${{ github.ref_name == 'v0' }}

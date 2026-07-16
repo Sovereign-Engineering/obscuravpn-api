@@ -2,13 +2,18 @@ use crate::cmd::Cmd;
 use crate::types::AccountInfo;
 use serde::{Deserialize, Serialize};
 
+/// Get Account Info
+///
+/// ## Expected Errors
+///
+/// None
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct GetAccountInfo();
 
 impl Cmd for GetAccountInfo {
     type Output = AccountInfo;
     const METHOD: http::Method = http::Method::GET;
-    const PATH: &'static str = super::PATH;
+    const PATH: &'static str = "account";
 }
 
 #[test]

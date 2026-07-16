@@ -14,6 +14,16 @@ pub enum LightningTopUpStatus {
     Expired,
 }
 
+/// Check the status of a Lightning Top-up
+///
+/// Lightning top-ups are usually processed within seconds of payment.
+///
+/// Once the top-up indicates that it has been processed the account has already been credited with the payment.
+///
+/// Top-up records are eventually purged for privacy reasons. Expect this API to fail for old top-ups.
+///
+/// ## Expected Errors
+/// - [`LightningTopUpNotFound`](crate::cmd::ApiErrorKind::LightningTopUpNotFound) if the `id` is invalid or pruned.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct CheckLightningTopUp {
     pub id: String,

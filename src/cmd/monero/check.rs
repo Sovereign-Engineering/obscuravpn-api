@@ -18,17 +18,57 @@ pub struct CheckMoneroTopUpInfo {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "snake_case")]
 pub enum MoneroPaymentStatus {
-    Unpaid,
-    PartiallyPaid,
+    /// A sufficient payment is detected but is awaiting confirmation.
     Confirming,
-    Paid,
+
+    /// This top-up has expired.
+    ///
+    /// This top-up is expired and must not be used. Create a new top-up to fund your account.
+    ///
+    /// This is a terminal state.
     Expired,
+
+    /// The top-up has failed.
+    ///
+    /// This is a terminal state. Contact support to see if we can help you.
     Failed,
+
+    /// The top-up has succeeded.
+    ///
+    /// The account has been credited.
+    ///
+    /// This is a terminal state.
+    Paid,
+
+    /// A payment is detected but it isn't sufficient.
+    ///
+    /// This is a terminal state, additional payments will not be processed. Contact support to see if we can help you.
+    PartiallyPaid,
+
+    /// Base state, no activity detected.
+    Unpaid,
 }
 
+/// A Monero top-up ID
+///
+/// This is used both in the API and can be used when contacting support. This is the main payment reference and should be retained in case any issues come up.
+///
+/// The first 4 characters can be used when contacting support, the full ID must be used with the API.
+///
+/// The status of the top-up can be checked with [`CheckMoneroTopUp`].
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct MoneroTopUpId(pub String);
 
+/// Check the status of a Monero Top-up
+///
+/// Monero transactions require blockchain confirmations before being processed and typically complete within 40min.
+///
+/// Once the top-up [`status`](CheckMoneroTopUpInfo::status) is [`Paid`](MoneroPaymentStatus::Paid) it has been processed the account has already been credited.
+///
+/// Top-up records are eventually purged for privacy reasons. Expect this API to fail for old top-ups.
+///
+/// ## Expected Errors
+/// - [`MoneroTopUpNotFound`](crate::cmd::ApiErrorKind::MoneroTopUpNotFound) if the `id` is invalid or pruned.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct CheckMoneroTopUp {
     pub id: MoneroTopUpId,
