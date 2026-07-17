@@ -1,7 +1,5 @@
 #![doc = include_str!("../doc/index.md")]
 
-#[doc = include_str!("../doc/account-creation.md")]
-pub mod account_creation {}
 #[doc = include_str!("../doc/auth.md")]
 pub mod auth {}
 #[doc = include_str!("../doc/error.md")]

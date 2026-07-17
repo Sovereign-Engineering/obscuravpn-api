@@ -1,5 +1,5 @@
-use crate::pow::PowOutput;
 use crate::types::AccountId;
+use crate::{pow::PowOutput, types::AuthToken};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -17,7 +17,7 @@ pub struct AcquireToken2Output {
     /// The token is used by adding an `Authorization: Bearer {token}` header to your requests.
     ///
     /// The token has no definite expiry date. It is recommended to cache tokens indefinitely, only acquiring a new one when the API returns a [`MissingOrInvalidAuthToken`](crate::cmd::ApiErrorKind::MissingOrInvalidAuthToken) error.
-    pub auth_token: String,
+    pub auth_token: AuthToken,
 
     /// Internal use.
     pub url_override: Option<UrlOverride>,

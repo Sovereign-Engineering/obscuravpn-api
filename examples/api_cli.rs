@@ -190,7 +190,7 @@ async fn main() -> anyhow::Result<()> {
         }
         Commands::UseReferralCode { code } => {
             eprintln!("Use referral code: {}", &code);
-            client.run(UseReferralCode { code }).await?;
+            client.run(UseReferralCode { code: ReferralCode(code) }).await?;
         }
         Commands::RotateReferralCode => {
             eprintln!("Rotate referral code");
