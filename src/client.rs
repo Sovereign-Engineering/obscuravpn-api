@@ -208,7 +208,7 @@ impl Client {
         let reqwest_request: reqwest::Request = request.clone().try_into().context("could not construct reqwest::Request")?;
         let first_error = match self.http.execute(reqwest_request).await {
             Ok(resp) => return Ok(resp),
-            Err(error) if error.is_connect() => {
+            Err(error) if error.is_connect() || error.is_timeout() => {
                 tracing::error!(
                     message_id = "XfTLkg6w",
                     ?error,
@@ -227,7 +227,7 @@ impl Client {
             };
             match self.http.execute(reqwest_request).await {
                 Ok(resp) => return Ok(resp),
-                Err(error) if error.is_connect() => tracing::error!(
+                Err(error) if error.is_connect() || error.is_timeout() => tracing::error!(
                     message_id = "m6JLZaYN",
                     host,
                     ?error,
