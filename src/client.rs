@@ -60,6 +60,7 @@ impl Client {
         user_agent: &str,
         #[cfg(not(any(target_os = "android", target_os = "windows")))] network_interface: Option<&str>,
         #[cfg(any(target_os = "android", target_os = "windows"))] network_interface: Option<std::net::IpAddr>,
+        #[cfg(target_os = "linux")] so_mark: Option<u32>,
         resolver: Option<Arc<dyn Resolve>>,
     ) -> anyhow::Result<Self> {
         let mut base_url = base_url.to_string();
@@ -74,9 +75,23 @@ impl Client {
         let server_names = once(primary_host).chain(alternative_hosts.iter().cloned());
 
         let mut rustls_config = Self::rustls_config(server_names)?;
-        let http = Self::http_client_builder(user_agent, rustls_config.clone(), network_interface, resolver.clone())?;
+        let http = Self::http_client_builder(
+            user_agent,
+            rustls_config.clone(),
+            network_interface,
+            #[cfg(target_os = "linux")]
+            so_mark,
+            resolver.clone(),
+        )?;
         rustls_config.enable_sni = false;
-        let http_no_sni = Self::http_client_builder(user_agent, rustls_config, network_interface, resolver)?;
+        let http_no_sni = Self::http_client_builder(
+            user_agent,
+            rustls_config,
+            network_interface,
+            #[cfg(target_os = "linux")]
+            so_mark,
+            resolver,
+        )?;
 
         Ok(Self {
             account_id,
@@ -94,6 +109,7 @@ impl Client {
         rustls_config: rustls::ClientConfig,
         #[cfg(not(any(target_os = "android", target_os = "windows")))] network_interface: Option<&str>,
         #[cfg(any(target_os = "android", target_os = "windows"))] network_interface: Option<std::net::IpAddr>,
+        #[cfg(target_os = "linux")] so_mark: Option<u32>,
         resolver: Option<Arc<dyn Resolve>>,
     ) -> anyhow::Result<reqwest::Client> {
         let builder = ClientBuilder::new()
@@ -111,6 +127,11 @@ impl Client {
             Some(network_interface) => builder.interface(network_interface),
             #[cfg(any(target_os = "android", target_os = "windows"))]
             Some(network_interface) => builder.local_address(network_interface),
+        };
+        #[cfg(target_os = "linux")]
+        let builder = match so_mark {
+            None => builder,
+            Some(so_mark) => builder.so_mark(so_mark),
         };
         builder.build().context("failed to initialize HTTP client")
     }
