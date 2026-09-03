@@ -15,8 +15,6 @@ pub struct CheckFriendCodesOutput {
     pub friends: HashMap<String, FriendCodeStatus>,
 }
 
-/// <div class=warning>The Rust client doesn't support GET parameters so can't use this call.</div>
-// https://linear.app/soveng/issue/OBS-2002/support-get-query-parameters-in-rust-api-client
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct CheckFriendCodes {
     pub friends: Vec<String>,
@@ -25,6 +23,6 @@ pub struct CheckFriendCodes {
 impl Cmd for CheckFriendCodes {
     type Output = CheckFriendCodesOutput;
 
-    const METHOD: http::Method = http::Method::GET;
+    const METHOD: http::Method = http::Method::POST;
     const PATH: &'static str = "friend_codes/status";
 }
