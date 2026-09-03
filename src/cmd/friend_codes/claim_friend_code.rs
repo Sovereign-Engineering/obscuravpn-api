@@ -15,5 +15,5 @@ impl Cmd for ClaimFriendCode {
     type Output = ClaimFriendCodeOutput;
 
     const METHOD: http::Method = http::Method::POST;
-    const PATH: &'static str = "friend_codes";
+    const PATH: &'static str = "friend_codes/claim";
 }

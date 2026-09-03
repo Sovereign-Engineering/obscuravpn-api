@@ -11,18 +11,20 @@ pub enum FriendCodeStatus {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct GetFriendCodesOutput {
+pub struct CheckFriendCodesOutput {
     pub friends: HashMap<String, FriendCodeStatus>,
 }
 
+/// <div class=warning>The Rust client doesn't support GET parameters so can't use this call.</div>
+// https://linear.app/soveng/issue/OBS-2002/support-get-query-parameters-in-rust-api-client
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct GetFriendCodes {
+pub struct CheckFriendCodes {
     pub friends: Vec<String>,
 }
 
-impl Cmd for GetFriendCodes {
-    type Output = GetFriendCodesOutput;
+impl Cmd for CheckFriendCodes {
+    type Output = CheckFriendCodesOutput;
 
     const METHOD: http::Method = http::Method::GET;
-    const PATH: &'static str = "friend_codes";
+    const PATH: &'static str = "friend_codes/status";
 }
