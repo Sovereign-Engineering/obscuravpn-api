@@ -3,6 +3,7 @@ mod apple;
 mod cache_wg_key;
 mod exit;
 mod exit2;
+mod friend_codes;
 mod google;
 mod lightning;
 mod monero;
@@ -18,6 +19,7 @@ pub use apple::*;
 pub use cache_wg_key::*;
 pub use exit::*;
 pub use exit2::*;
+pub use friend_codes::*;
 pub use google::*;
 use http::HeaderValue;
 pub use lightning::*;
@@ -119,6 +121,9 @@ pub enum ApiErrorKind {
 
     /// This account already has a referrer.
     AlreadyReferred {},
+
+    /// Every friend code has already been claimed.
+    AllFriendCodesClaimed {},
 
     AssociateAccountConflict {},
 
