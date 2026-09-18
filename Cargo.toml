@@ -5,7 +5,7 @@ edition = "2024"
 
 description = "API client for Obscura VPN."
 homepage = "https://github.com/Sovereign-Engineering/obscuravpn-api"
-license = "PolyForm-Noncommercial-1.0.0"
+license = "GPL-3.0-only WITH GPL-3.0-linking-source-exception"
 repository = "https://github.com/Sovereign-Engineering/obscuravpn-api"
 
 [dependencies]

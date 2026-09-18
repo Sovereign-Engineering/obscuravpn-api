@@ -12,7 +12,8 @@ accepted = [
 no-clearly-defined = true
 
 [obscuravpn-api]
-accepted = ["PolyForm-Noncommercial-1.0.0"]
+# Our current version of cargo-about doesn't support "GPL-3.0-only"
+accepted = ["GPL-3.0 WITH GPL-3.0-linking-source-exception"]
 
 [ring.clarify]
 license = "ISC AND MIT AND OpenSSL"
