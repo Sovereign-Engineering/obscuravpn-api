@@ -205,6 +205,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
 
 [[package]]
+name = "base64"
+version = "0.23.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ac07cdecf99051d9a5238b80f35af32cdeba5b336e55d957b318b50137e18da5"
+
+[[package]]
 name = "base64ct"
 version = "1.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -863,15 +869,17 @@ dependencies = [
 
 [[package]]
 name = "hyper-util"
-version = "0.1.20"
-source = "git+https://github.com/Sovereign-Engineering/hyper-util?rev=f2659bd55b85bf524abac9ab0ce4951bb67077b9#f2659bd55b85bf524abac9ab0ce4951bb67077b9"
+version = "0.1.21"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ddc03d96684f9226b8a787cdb71488417b53ab5ea8fdb1dac946cb9431cc8bff"
 dependencies = [
- "base64",
+ "base64 0.23.1",
  "bytes",
  "futures-channel",
  "futures-util",
  "http",
  "http-body",
+ "httparse",
  "hyper",
  "ipnet",
  "libc",
@@ -1313,7 +1321,7 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "argon2",
- "base64",
+ "base64 0.22.1",
  "bytes",
  "clap",
  "derive_more",
@@ -1651,10 +1659,10 @@ checksum = "2b15c43186be67a4fd63bee50d0303afffcef381492ebe2c5d87f324e1b8815c"
 
 [[package]]
 name = "reqwest"
-version = "0.13.4"
-source = "git+https://github.com/Sovereign-Engineering/reqwest?rev=7ba2e76a02454b0fa414e0ddbf8aa609ed05b944#7ba2e76a02454b0fa414e0ddbf8aa609ed05b944"
+version = "0.13.5"
+source = "git+https://github.com/Sovereign-Engineering/reqwest?rev=87cc6fc6edc6b3c8f65e5a6cd1d497e4eb8bf32f#87cc6fc6edc6b3c8f65e5a6cd1d497e4eb8bf32f"
 dependencies = [
- "base64",
+ "base64 0.23.1",
  "bytes",
  "futures-core",
  "futures-util",
@@ -1930,7 +1938,7 @@ version = "3.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d6b6f7f2fcb69f747921f79f3926bd1e203fce4fef62c268dd3abfb6d86029aa"
 dependencies = [
- "base64",
+ "base64 0.22.1",
  "chrono",
  "hex",
  "indexmap 1.9.3",
