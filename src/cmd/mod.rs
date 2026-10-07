@@ -1,4 +1,5 @@
 mod account;
+mod admin;
 mod apple;
 mod cache_wg_key;
 mod exit;
@@ -15,6 +16,7 @@ mod stripe;
 mod tunnel;
 
 pub use account::*;
+pub use admin::*;
 pub use apple::*;
 pub use cache_wg_key::*;
 pub use exit::*;
