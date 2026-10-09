@@ -8,9 +8,11 @@ mod google;
 mod lightning;
 mod monero;
 mod newsletter_subscribe;
+mod nnn;
 mod prices;
 mod referrals;
 mod relay;
+mod status;
 mod stripe;
 mod tunnel;
 
@@ -25,9 +27,11 @@ use http::HeaderValue;
 pub use lightning::*;
 pub use monero::*;
 pub use newsletter_subscribe::*;
+pub use nnn::*;
 pub use prices::*;
 pub use referrals::*;
 pub use relay::*;
+pub use status::*;
 pub use stripe::*;
 pub use tunnel::*;
 
@@ -156,6 +160,20 @@ pub enum ApiErrorKind {
 
     MoneroTopUpNotFound {},
 
+    /// This account already submitted nnn evidence.
+    ///
+    /// Each account can submit once. The existing case is available via account info.
+    NnnAlreadySubmitted {},
+
+    /// No nnn case has the given Share ID.
+    NnnShareNotFound {},
+
+    /// The nnn submission window has ended.
+    NnnSubmissionsClosed {},
+
+    /// The server is not accepting nnn evidence right now.
+    NnnUnavailable {},
+
     /// Attempt to call an API route which doesn't exist.
     ///
     /// Notably this is different than calling a valid route for a resource that doesn't exist. You typoed the URL.
@@ -168,6 +186,9 @@ pub enum ApiErrorKind {
 
     /// No exit matched the requested filters.
     NoMatchingExit {},
+
+    /// The request body exceeds the size limit for this route.
+    PayloadTooLarge {},
 
     /// Rate limit exceeded.
     ///
