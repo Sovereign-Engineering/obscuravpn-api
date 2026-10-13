@@ -41,7 +41,12 @@ fn test_account_info_json() {
           "current_expiry": 1000,
           "auto_renews": null,
           "has_paid": true,
-          "free_month_on_next_payment": true
+          "free_month_on_next_payment": true,
+          "free_trial": {
+            "active": false,
+            "expires_at": 900
+          },
+          "nnn": null
         }
     "#;
     crate::cmd::check_cmd_json::<GetAccountInfo>(None, Some(output_json));

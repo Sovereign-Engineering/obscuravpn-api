@@ -9,7 +9,7 @@ use serde_with::base64::Base64;
 use serde_with::serde_as;
 use thiserror::Error;
 
-use crate::cmd::{MoneroPaymentStatus, MoneroTopUpId, ReferralCode};
+use crate::cmd::{MoneroPaymentStatus, MoneroTopUpId, NnnShareId, ReferralCode};
 use crate::time::Timestamp;
 
 /// Account Number
@@ -156,6 +156,9 @@ pub struct AccountInfo {
     /// This would typically be due to a referral bonus.
     pub free_month_on_next_payment: bool,
 
+    /// The account's free trial, if any.
+    pub free_trial: Option<FreeTrialInfo>,
+
     #[serde(default)]
     pub google_subscription: Option<GoogleSubscriptionInfo>,
 
@@ -173,6 +176,9 @@ pub struct AccountInfo {
     ///
     /// Lists top-ups for which a payment has been detected but that has not yet been fully credited to the account. This lets you discover Monero payments that may be credited to the account soon.
     pub monero_pending_payments: Vec<MoneroPaymentInProgress>,
+
+    /// The account's nnn case, if evidence was submitted.
+    pub nnn: Option<NnnCaseInfo>,
 
     /// The most relevant funding method for the account.
     ///
@@ -205,6 +211,7 @@ pub struct AccountInfo {
 #[serde(rename_all = "snake_case")]
 pub enum FundingMethod {
     AppleSubscription,
+    FreeTrial,
     GoogleSubscription,
     StripeSubscription,
 
@@ -241,6 +248,27 @@ fn test_funding_method() {
         .unwrap(),
         FundingMethod::Unknown,
     );
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct FreeTrialInfo {
+    /// If the account is active because of the free trial.
+    pub active: bool,
+
+    /// Free trial expiry time.
+    pub expires_at: Timestamp,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct NnnCaseInfo {
+    /// Months credited to the account for this case.
+    pub applied_months: Option<u16>,
+
+    /// Months of prior service the user claimed.
+    pub claimed_months: u16,
+
+    /// Public identifier of the case.
+    pub share_id: NnnShareId,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
