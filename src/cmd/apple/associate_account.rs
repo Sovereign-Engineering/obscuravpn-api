@@ -1,4 +1,4 @@
-use crate::cmd::Cmd;
+use crate::cmd::{AuthRequired, Cmd};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -19,6 +19,7 @@ pub struct AppleAssociateAccount {
 
 impl Cmd for AppleAssociateAccount {
     type Output = AppleAssociateAccountOutput;
+    type Auth = AuthRequired;
 
     const METHOD: http::Method = http::Method::POST;
     const PATH: &'static str = "apple/associate_account";

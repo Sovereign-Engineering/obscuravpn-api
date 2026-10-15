@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{cmd::ETagCmd, types::OneRelay};
 
-use super::Cmd;
+use super::{AuthRequired, Cmd};
 
 const RELAYS_PATH: &str = "relays";
 
@@ -11,6 +11,7 @@ pub struct ListRelays {}
 
 impl Cmd for ListRelays {
     type Output = Vec<OneRelay>;
+    type Auth = AuthRequired;
     const METHOD: http::Method = http::Method::GET;
     const PATH: &'static str = RELAYS_PATH;
 }

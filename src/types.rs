@@ -638,6 +638,7 @@ impl From<AuthToken> for String {
     }
 }
 
+#[cfg(feature = "server")]
 fn localhost_ip_v6() -> net::Ipv6Addr {
     net::Ipv6Addr::LOCALHOST
 }

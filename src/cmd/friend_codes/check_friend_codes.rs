@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::cmd::Cmd;
+use crate::cmd::{AuthRequired, Cmd};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -22,6 +22,7 @@ pub struct CheckFriendCodes {
 
 impl Cmd for CheckFriendCodes {
     type Output = CheckFriendCodesOutput;
+    type Auth = AuthRequired;
 
     const METHOD: http::Method = http::Method::POST;
     const PATH: &'static str = "friend_codes/status";

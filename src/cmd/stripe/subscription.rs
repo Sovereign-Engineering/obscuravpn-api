@@ -1,4 +1,4 @@
-use crate::cmd::Cmd;
+use crate::cmd::{AuthRequired, Cmd};
 use serde::{Deserialize, Serialize};
 
 const CREATE_STRIPE_SUBSCRIPTION_CHECKOUT_PATH: &str = "stripe/create_checkout_session";
@@ -22,6 +22,7 @@ impl CreateStripeSubscriptionCheckoutOutput {
 
 impl Cmd for CreateStripeSubscriptionCheckout {
     type Output = CreateStripeSubscriptionCheckoutOutput;
+    type Auth = AuthRequired;
     const METHOD: http::Method = http::Method::POST;
     const PATH: &'static str = CREATE_STRIPE_SUBSCRIPTION_CHECKOUT_PATH;
 }
@@ -50,6 +51,7 @@ impl CreateStripeManageSubscriptionSessionOutput {
 
 impl Cmd for CreateStripeManageSubscriptionSession {
     type Output = CreateStripeManageSubscriptionSessionOutput;
+    type Auth = AuthRequired;
 
     const METHOD: http::Method = http::Method::POST;
     const PATH: &'static str = CREATE_PORTAL_SESSION_CHECKOUT_PATH;

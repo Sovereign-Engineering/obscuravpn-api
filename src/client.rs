@@ -1,4 +1,4 @@
-use crate::cmd::{ApiError, ApiErrorBody, ApiErrorKind, Cmd, ETagCmd, ProtocolError, parse_response};
+use crate::cmd::{ApiError, ApiErrorBody, ApiErrorKind, AuthOptional, Cmd, CmdAuth, ETagCmd, ProtocolError, parse_response};
 use crate::pow::PowOutput;
 use crate::response::Response;
 use crate::token::{AcquireToken, AcquireToken2Output};
@@ -16,15 +16,62 @@ use std::time::Duration;
 use thiserror::Error;
 use url::Url;
 
+pub trait ClientAuth {
+    fn as_authenticated(&self) -> Option<&Authenticated>;
+}
+
+pub trait CanRun<R: CmdAuth>: ClientAuth {}
+
 #[derive(Debug)]
-pub struct Client {
+pub struct Unauthenticated;
+
+impl ClientAuth for Unauthenticated {
+    fn as_authenticated(&self) -> Option<&Authenticated> {
+        None
+    }
+}
+
+impl CanRun<AuthOptional> for Unauthenticated {}
+
+#[derive(Debug)]
+pub struct Authenticated {
     account_id: AccountId,
+    cached_auth_token: Arc<Mutex<Option<AuthToken>>>,
+    acquiring_auth_token: tokio::sync::Mutex<()>,
+}
+
+impl Authenticated {
+    fn clear_auth_token(&self, token: AuthToken) {
+        let mut guard = self.cached_auth_token.lock().unwrap();
+        if guard.as_ref() == Some(&token) {
+            guard.take();
+        }
+    }
+
+    fn get_auth_token(&self) -> Option<AuthToken> {
+        self.cached_auth_token.lock().unwrap().clone()
+    }
+
+    fn set_auth_token(&self, token: Option<AuthToken>) {
+        *self.cached_auth_token.lock().unwrap() = token;
+    }
+}
+
+impl ClientAuth for Authenticated {
+    fn as_authenticated(&self) -> Option<&Authenticated> {
+        Some(self)
+    }
+}
+
+impl<R: CmdAuth> CanRun<R> for Authenticated {}
+
+#[derive(Debug)]
+pub struct Client<A = Authenticated> {
+    auth: A,
     base_url: String,
     alternative_hosts: Vec<String>,
     http: reqwest::Client,
     http_no_sni: reqwest::Client,
-    cached_auth_token: Arc<Mutex<Option<AuthToken>>>,
-    acquiring_auth_token: tokio::sync::Mutex<()>,
 }
 
 #[derive(Error, Debug)]
@@ -52,11 +99,10 @@ pub enum ClientError {
 
 const POW_SOLVE_TIMEOUT: Duration = Duration::from_secs(10);
 
-impl Client {
-    pub fn new(
+impl Client<Unauthenticated> {
+    pub fn new_unauthenticated(
         base_url: impl ToString,
         alternative_hosts: Vec<String>,
-        account_id: AccountId,
         user_agent: &str,
         #[cfg(not(any(target_os = "android", target_os = "windows")))] network_interface: Option<&str>,
         #[cfg(any(target_os = "android", target_os = "windows"))] network_interface: Option<std::net::IpAddr>,
@@ -94,66 +140,173 @@ impl Client {
         )?;
 
         Ok(Self {
-            account_id,
+            auth: Unauthenticated,
             base_url,
-            cached_auth_token: Arc::new(Mutex::new(None)),
+            alternative_hosts,
             http,
             http_no_sni,
-            acquiring_auth_token: tokio::sync::Mutex::new(()),
-            alternative_hosts,
         })
     }
 
-    fn http_client_builder(
+    pub fn into_authenticated(self, account_id: AccountId) -> Client<Authenticated> {
+        let Self {
+            auth: Unauthenticated,
+            base_url,
+            alternative_hosts,
+            http,
+            http_no_sni,
+        } = self;
+        Client {
+            auth: Authenticated {
+                account_id,
+                cached_auth_token: Arc::new(Mutex::new(None)),
+                acquiring_auth_token: tokio::sync::Mutex::new(()),
+            },
+            base_url,
+            alternative_hosts,
+            http,
+            http_no_sni,
+        }
+    }
+}
+
+impl Client<Authenticated> {
+    pub fn new(
+        base_url: impl ToString,
+        alternative_hosts: Vec<String>,
+        account_id: AccountId,
         user_agent: &str,
-        rustls_config: rustls::ClientConfig,
         #[cfg(not(any(target_os = "android", target_os = "windows")))] network_interface: Option<&str>,
         #[cfg(any(target_os = "android", target_os = "windows"))] network_interface: Option<std::net::IpAddr>,
         #[cfg(target_os = "linux")] so_mark: Option<u32>,
         resolver: Option<Arc<dyn Resolve>>,
-    ) -> anyhow::Result<reqwest::Client> {
-        let builder = ClientBuilder::new()
-            .timeout(Duration::from_secs(60))
-            .read_timeout(Duration::from_secs(10))
-            .user_agent(user_agent)
-            .use_preconfigured_tls(rustls_config);
-        let builder = match resolver {
-            None => builder,
-            Some(resolver) => builder.dns_resolver(resolver),
-        };
-        let builder = match network_interface {
-            None => builder,
-            #[cfg(not(any(target_os = "android", target_os = "windows")))]
-            Some(network_interface) => builder.interface(network_interface),
-            #[cfg(any(target_os = "android", target_os = "windows"))]
-            Some(network_interface) => builder.local_address(network_interface),
-        };
-        #[cfg(target_os = "linux")]
-        let builder = match so_mark {
-            None => builder,
-            Some(so_mark) => builder.so_mark(so_mark),
-        };
-        builder.build().context("failed to initialize HTTP client")
-    }
-
-    fn clear_auth_token(&self, token: AuthToken) {
-        let mut guard = self.cached_auth_token.lock().unwrap();
-        if guard.as_ref() == Some(&token) {
-            guard.take();
-        }
+    ) -> anyhow::Result<Self> {
+        Ok(Client::new_unauthenticated(
+            base_url,
+            alternative_hosts,
+            user_agent,
+            network_interface,
+            #[cfg(target_os = "linux")]
+            so_mark,
+            resolver,
+        )?
+        .into_authenticated(account_id))
     }
 
     pub async fn acquire_auth_token(&self) -> Result<AcquireToken2Output, ClientError> {
-        if let Some(auth_token) = self.get_auth_token() {
+        self.acquire_auth_token_for(&self.auth).await
+    }
+
+    pub fn get_auth_token(&self) -> Option<AuthToken> {
+        self.auth.get_auth_token()
+    }
+
+    pub fn set_auth_token(&self, token: Option<AuthToken>) {
+        self.auth.set_auth_token(token);
+    }
+}
+
+impl<A> Client<A> {
+    pub async fn run<C>(&self, cmd: C) -> Result<C::Output, ClientError>
+    where
+        C: Cmd,
+        A: CanRun<C::Auth>,
+    {
+        self.run_impl(cmd, None)
+            .await?
+            .into_body()
+            .ok_or(anyhow::Error::msg("Non-conditional request has no body.").into())
+    }
+
+    pub async fn run_with_etag<C>(&self, cmd: C, etag: Option<&[u8]>) -> Result<Response<C::Output>, ClientError>
+    where
+        C: ETagCmd,
+        A: CanRun<C::Auth>,
+    {
+        self.run_impl(cmd, etag).await
+    }
+
+    async fn run_impl<C>(&self, cmd: C, etag: Option<&[u8]>) -> Result<Response<C::Output>, ClientError>
+    where
+        C: Cmd,
+        A: CanRun<C::Auth>,
+    {
+        let etag = etag
+            .map(HeaderValue::from_bytes)
+            .transpose()
+            .map_err(|_| ClientError::InvalidHeaderValue)?;
+        let request = self.to_request(&cmd, etag)?;
+        let Some(auth) = self.auth.as_authenticated() else {
+            let res = self.send_http(request).await?;
+            return parse_response(res).await;
+        };
+        for _ in 0..3 {
+            let auth_token = self.acquire_auth_token_for(auth).await?.auth_token;
+            if let Some(output) = self.run_once::<C>(request.clone(), &auth_token).await? {
+                return Ok(output);
+            }
+            auth.clear_auth_token(auth_token);
+        }
+        Err(anyhow!("repeatedly acquired invalid auth token").into())
+    }
+
+    // Sends the http request and maps expected error codes to client errors.
+    // Returns `Ok(None)` if the auth token is invalid, because this error shouldn't bubble up.
+    async fn run_once<C: Cmd>(&self, mut request: http::Request<String>, auth_token: &AuthToken) -> Result<Option<Response<C::Output>>, ClientError> {
+        request.headers_mut().insert(
+            http::header::AUTHORIZATION,
+            HeaderValue::from_str(&format!("Bearer {}", auth_token.as_str())).context("invalid auth token header")?,
+        );
+        let res = self.send_http(request).await?;
+        match parse_response(res).await {
+            Ok(output) => Ok(Some(output)),
+            Err(ClientError::ApiError(error)) => match error.body.error {
+                ApiErrorKind::MissingOrInvalidAuthToken {} => {
+                    tracing::warn!(
+                        message_id = "Oroo1Xah",
+                        http.response.status_code = error.status.as_u16(),
+                        detail = error.body.detail,
+                        error = error.body.msg,
+                        error.type = "MissingOrInvalidAuthToken",
+                        "Auth token rejected."
+                    );
+                    Ok(None)
+                }
+                _ => Err(ClientError::ApiError(error)),
+            },
+            Err(err) => Err(err),
+        }
+    }
+
+    fn to_request<C: Cmd>(&self, cmd: &C, etag: Option<HeaderValue>) -> anyhow::Result<http::Request<String>> {
+        let url = Url::parse(&self.base_url)?.join(C::PATH)?;
+        let mut request = http::Request::builder()
+            .method(C::METHOD)
+            .uri(url.as_str())
+            .header(http::header::CONTENT_TYPE, "application/json")
+            .body(String::new())?;
+        if let Some(etag) = etag {
+            request.headers_mut().insert(http::header::IF_NONE_MATCH, etag);
+        }
+        if C::METHOD == http::Method::GET {
+            // TODO: Support GET parameters: https://linear.app/soveng/issue/OBS-2002/support-get-query-parameters-in-rust-api-client
+        } else {
+            *request.body_mut() = serde_json::to_string(cmd)?;
+        }
+        Ok(request)
+    }
+
+    async fn acquire_auth_token_for(&self, auth: &Authenticated) -> Result<AcquireToken2Output, ClientError> {
+        if let Some(auth_token) = auth.get_auth_token() {
             return Ok(AcquireToken2Output {
                 auth_token,
                 url_override: None,
             });
         }
 
-        let acquiring_auth_token = self.acquiring_auth_token.lock().await;
+        let acquiring_auth_token = auth.acquiring_auth_token.lock().await;
 
-        if let Some(auth_token) = self.get_auth_token() {
+        if let Some(auth_token) = auth.get_auth_token() {
             return Ok(AcquireToken2Output {
                 auth_token,
                 url_override: None,
@@ -162,9 +315,9 @@ impl Client {
 
         tracing::info!(message_id = "xah8Usoo", "Acquiring auth token.");
 
-        let res = self.request_token(&self.account_id).await?;
+        let res = self.request_token(&auth.account_id).await?;
         let body = res.into_body().context("No auth token in response")?;
-        self.set_auth_token(Some(body.auth_token.clone()));
+        auth.set_auth_token(Some(body.auth_token.clone()));
 
         drop(acquiring_auth_token);
         Ok(body)
@@ -217,12 +370,36 @@ impl Client {
         run_request(pow).await
     }
 
-    pub fn get_auth_token(&self) -> Option<AuthToken> {
-        self.cached_auth_token.lock().unwrap().clone()
-    }
-
-    pub fn set_auth_token(&self, token: Option<AuthToken>) {
-        *self.cached_auth_token.lock().unwrap() = token
+    fn http_client_builder(
+        user_agent: &str,
+        rustls_config: rustls::ClientConfig,
+        #[cfg(not(any(target_os = "android", target_os = "windows")))] network_interface: Option<&str>,
+        #[cfg(any(target_os = "android", target_os = "windows"))] network_interface: Option<std::net::IpAddr>,
+        #[cfg(target_os = "linux")] so_mark: Option<u32>,
+        resolver: Option<Arc<dyn Resolve>>,
+    ) -> anyhow::Result<reqwest::Client> {
+        let builder = ClientBuilder::new()
+            .timeout(Duration::from_secs(60))
+            .read_timeout(Duration::from_secs(10))
+            .user_agent(user_agent)
+            .use_preconfigured_tls(rustls_config);
+        let builder = match resolver {
+            None => builder,
+            Some(resolver) => builder.dns_resolver(resolver),
+        };
+        let builder = match network_interface {
+            None => builder,
+            #[cfg(not(any(target_os = "android", target_os = "windows")))]
+            Some(network_interface) => builder.interface(network_interface),
+            #[cfg(any(target_os = "android", target_os = "windows"))]
+            Some(network_interface) => builder.local_address(network_interface),
+        };
+        #[cfg(target_os = "linux")]
+        let builder = match so_mark {
+            None => builder,
+            Some(so_mark) => builder.so_mark(so_mark),
+        };
+        builder.build().context("failed to initialize HTTP client")
     }
 
     async fn send_http(&self, request: http::Request<String>) -> Result<reqwest::Response, ClientError> {
@@ -272,62 +449,6 @@ impl Client {
 
         tracing::error!(message_id = "QmAdyhxm", "all attempts to evade blocks failed, returning original error");
         Err(first_error.into())
-    }
-
-    pub async fn run<C: Cmd>(&self, cmd: C) -> Result<C::Output, ClientError> {
-        self.run_impl(cmd, None)
-            .await?
-            .into_body()
-            .ok_or(anyhow::Error::msg("Non-conditional request has no body.").into())
-    }
-
-    pub async fn run_with_etag<C: ETagCmd>(&self, cmd: C, etag: Option<&[u8]>) -> Result<Response<C::Output>, ClientError> {
-        self.run_impl(cmd, etag).await
-    }
-
-    async fn run_impl<C: Cmd>(&self, cmd: C, etag: Option<&[u8]>) -> Result<Response<C::Output>, ClientError> {
-        let etag = etag
-            .map(HeaderValue::from_bytes)
-            .transpose()
-            .map_err(|_| ClientError::InvalidHeaderValue)?;
-        for _ in 0..3 {
-            let auth_token = self.acquire_auth_token().await?.auth_token;
-            if let Some(output) = self.run_once::<C>(&cmd, &auth_token, etag.clone()).await? {
-                return Ok(output);
-            }
-            self.clear_auth_token(auth_token);
-        }
-        Err(anyhow!("repeatedly acquired invalid auth token").into())
-    }
-
-    // Sends the http request and maps expected error codes to client errors.
-    // Returns `Ok(None)` if the auth token is invalid, because this error shouldn't bubble up.
-    async fn run_once<C: Cmd>(
-        &self,
-        body: &C,
-        auth_token: &AuthToken,
-        etag: Option<HeaderValue>,
-    ) -> Result<Option<Response<C::Output>>, ClientError> {
-        let request = body.to_request(&self.base_url, auth_token, etag)?;
-        let res = self.send_http(request).await?;
-        match parse_response(res).await {
-            Ok(output) => Ok(Some(output)),
-            Err(ClientError::ApiError(error)) => match error.body.error {
-                ApiErrorKind::MissingOrInvalidAuthToken {} => {
-                    tracing::warn!(
-                        message_id = "Oroo1Xah",
-                        http.response.status_code = error.status.as_u16(),
-                        detail = error.body.detail,
-                        error = error.body.msg,
-                        error.type = "MissingOrInvalidAuthToken",
-                        "Auth token rejected."
-                    );
-                    Ok(None)
-                }
-                _ => Err(ClientError::ApiError(error)),
-            },
-            Err(err) => Err(err),
-        }
     }
 
     fn rustls_config(server_name_for_cert_verification: impl IntoIterator<Item = String>) -> anyhow::Result<rustls::ClientConfig> {

@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{cmd::ETagCmd, types::OneExit};
 
-use super::Cmd;
+use super::{AuthRequired, Cmd};
 
 const EXITS_PATH: &str = "exits";
 
@@ -11,6 +11,7 @@ pub struct ListExits {}
 
 impl Cmd for ListExits {
     type Output = Vec<OneExit>;
+    type Auth = AuthRequired;
     const METHOD: http::Method = http::Method::GET;
     const PATH: &'static str = EXITS_PATH;
 }

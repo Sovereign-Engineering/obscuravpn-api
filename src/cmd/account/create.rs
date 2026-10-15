@@ -1,6 +1,6 @@
-use crate::cmd::ReferralCode;
+use crate::cmd::{AuthOptional, Cmd, ReferralCode};
+use crate::pow::PowOutput;
 use crate::types::{AccountId, AuthToken};
-use crate::{cmd::Cmd, pow::PowOutput};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -22,6 +22,7 @@ pub struct CreateAccount {
 
 impl Cmd for CreateAccount {
     type Output = CreateAccountInfo;
+    type Auth = AuthOptional;
     const METHOD: http::Method = http::Method::POST;
     const PATH: &'static str = "account";
 }

@@ -1,4 +1,7 @@
-use crate::{cmd::Cmd, types::SaleId};
+use crate::{
+    cmd::{AuthRequired, Cmd},
+    types::SaleId,
+};
 use serde::{Deserialize, Serialize};
 
 const STRIPE_TOP_UP_PATH: &str = "stripe/top_up";
@@ -20,6 +23,7 @@ pub struct CreateStripeTopUp {
 
 impl Cmd for CreateStripeTopUp {
     type Output = StripeTopUpInfo;
+    type Auth = AuthRequired;
 
     const METHOD: http::Method = http::Method::POST;
     const PATH: &'static str = STRIPE_TOP_UP_PATH;

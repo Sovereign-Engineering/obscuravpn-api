@@ -1,4 +1,4 @@
-use crate::cmd::Cmd;
+use crate::cmd::{AuthRequired, Cmd};
 use crate::types::OneTunnel;
 use serde::{Deserialize, Serialize};
 
@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 pub struct ListTunnels {}
 impl Cmd for ListTunnels {
     type Output = Vec<OneTunnel>;
+    type Auth = AuthRequired;
     const METHOD: http::Method = http::Method::GET;
     const PATH: &'static str = super::PATH;
 }

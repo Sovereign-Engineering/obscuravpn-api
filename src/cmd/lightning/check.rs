@@ -1,4 +1,4 @@
-use crate::cmd::Cmd;
+use crate::cmd::{AuthRequired, Cmd};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -31,6 +31,7 @@ pub struct CheckLightningTopUp {
 
 impl Cmd for CheckLightningTopUp {
     type Output = CheckLightningTopUpInfo;
+    type Auth = AuthRequired;
 
     const METHOD: http::Method = http::Method::POST;
     const PATH: &'static str = "lightning/top_up/check";

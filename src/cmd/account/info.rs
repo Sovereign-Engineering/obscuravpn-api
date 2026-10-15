@@ -1,4 +1,4 @@
-use crate::cmd::Cmd;
+use crate::cmd::{AuthRequired, Cmd};
 use crate::types::AccountInfo;
 use serde::{Deserialize, Serialize};
 
@@ -12,6 +12,7 @@ pub struct GetAccountInfo();
 
 impl Cmd for GetAccountInfo {
     type Output = AccountInfo;
+    type Auth = AuthRequired;
     const METHOD: http::Method = http::Method::GET;
     const PATH: &'static str = "account";
 }

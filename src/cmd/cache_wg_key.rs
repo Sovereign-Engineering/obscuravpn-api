@@ -1,4 +1,4 @@
-use crate::cmd::Cmd;
+use crate::cmd::{AuthRequired, Cmd};
 use crate::types::WgPubkey;
 use serde::{Deserialize, Serialize};
 
@@ -10,6 +10,7 @@ pub struct CacheWgKey {
 
 impl Cmd for CacheWgKey {
     type Output = ();
+    type Auth = AuthRequired;
     const METHOD: http::Method = http::Method::POST;
     const PATH: &'static str = "cache_wg_key";
 }
