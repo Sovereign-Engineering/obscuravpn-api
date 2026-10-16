@@ -41,6 +41,7 @@ fn test_account_info_json() {
           "received_free_months": 2,
           "current_expiry": 1000,
           "auto_renews": null,
+          "eligible_for_friend_codes": true,
           "has_paid": true,
           "free_month_on_next_payment": true,
           "free_trial": {

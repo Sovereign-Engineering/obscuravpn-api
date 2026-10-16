@@ -151,6 +151,10 @@ pub struct AccountInfo {
     /// If auto-renewing or inactive, this is None
     pub current_expiry: Option<Timestamp>,
 
+    /// Whether the account can claim friend codes.
+    #[serde(default)]
+    pub eligible_for_friend_codes: bool,
+
     /// If the user expects to receive a bonus month when they make a payment.
     ///
     /// This would typically be due to a referral bonus.
