@@ -119,6 +119,9 @@ pub enum ApiErrorKind {
     /// The request doesn't satisfy the preconditions.
     BadRequest {},
 
+    /// This account is not eligible to claim friend codes.
+    IneligibleForFriendCodes {},
+
     /// This account is not eligible to have a referrer linked.
     IneligibleForReferral {},
 
