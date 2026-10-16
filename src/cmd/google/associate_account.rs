@@ -1,4 +1,4 @@
-use crate::cmd::Cmd;
+use crate::cmd::{AuthRequired, Cmd};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -9,6 +9,7 @@ pub struct GoogleAssociateAccount {
 
 impl Cmd for GoogleAssociateAccount {
     type Output = ();
+    type Auth = AuthRequired;
 
     const METHOD: http::Method = http::Method::POST;
     const PATH: &'static str = "google/associate_account";

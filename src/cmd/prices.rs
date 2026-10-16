@@ -1,4 +1,4 @@
-use super::Cmd;
+use super::{AuthOptional, Cmd};
 use crate::{cmd::ETagCmd, types::Prices};
 use serde::{Deserialize, Serialize};
 
@@ -20,6 +20,7 @@ pub struct ListPrices {
 
 impl Cmd for ListPrices {
     type Output = Prices;
+    type Auth = AuthOptional;
     const METHOD: http::Method = http::Method::GET;
     const PATH: &'static str = "prices";
 }

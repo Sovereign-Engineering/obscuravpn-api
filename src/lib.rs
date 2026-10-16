@@ -20,9 +20,7 @@ mod response;
 pub mod wg_fragment;
 
 #[cfg(feature = "client")]
-pub use client::Client;
-#[cfg(feature = "client")]
-pub use client::ClientError;
+pub use client::{Authenticated, CanRun, Client, ClientAuth, ClientError, Unauthenticated};
 #[cfg(feature = "client")]
 pub use response::Response;
 #[cfg(feature = "client")]

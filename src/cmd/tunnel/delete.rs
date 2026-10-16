@@ -1,4 +1,4 @@
-use crate::cmd::Cmd;
+use crate::cmd::{AuthRequired, Cmd};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -7,6 +7,7 @@ pub struct DeleteTunnel {
 }
 impl Cmd for DeleteTunnel {
     type Output = ();
+    type Auth = AuthRequired;
     const METHOD: http::Method = http::Method::DELETE;
     const PATH: &'static str = super::PATH;
 }

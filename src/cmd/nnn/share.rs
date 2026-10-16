@@ -1,4 +1,4 @@
-use crate::cmd::Cmd;
+use crate::cmd::{AuthOptional, Cmd};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -17,6 +17,7 @@ pub struct NnnShareOutput {
 
 impl Cmd for NnnShare {
     type Output = NnnShareOutput;
+    type Auth = AuthOptional;
     const METHOD: http::Method = http::Method::POST;
     const PATH: &'static str = "nnn/share";
 }

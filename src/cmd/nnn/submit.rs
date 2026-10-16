@@ -1,4 +1,4 @@
-use crate::cmd::Cmd;
+use crate::cmd::{AuthRequired, Cmd};
 use crate::types::NnnCaseInfo;
 use serde::{Deserialize, Serialize};
 use serde_with::base64::Base64;
@@ -36,6 +36,7 @@ impl std::fmt::Debug for NnnSubmit {
 
 impl Cmd for NnnSubmit {
     type Output = NnnCaseInfo;
+    type Auth = AuthRequired;
     const METHOD: http::Method = http::Method::POST;
     const PATH: &'static str = "nnn/submit";
 }

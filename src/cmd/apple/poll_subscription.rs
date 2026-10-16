@@ -1,4 +1,4 @@
-use crate::cmd::Cmd;
+use crate::cmd::{AuthRequired, Cmd};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -17,6 +17,7 @@ pub struct ApplePollSubscription {
 
 impl Cmd for ApplePollSubscription {
     type Output = ApplePollSubscriptionOutput;
+    type Auth = AuthRequired;
 
     const METHOD: http::Method = http::Method::POST;
     const PATH: &'static str = "apple/poll_subscription";

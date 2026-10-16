@@ -1,4 +1,4 @@
-use crate::cmd::Cmd;
+use crate::cmd::{AuthRequired, Cmd};
 use serde::{Deserialize, Serialize};
 
 #[serde_with::serde_as]
@@ -76,6 +76,7 @@ pub struct CheckMoneroTopUp {
 
 impl Cmd for CheckMoneroTopUp {
     type Output = CheckMoneroTopUpInfo;
+    type Auth = AuthRequired;
 
     const METHOD: http::Method = http::Method::POST;
     const PATH: &'static str = "monero/top_up/check";

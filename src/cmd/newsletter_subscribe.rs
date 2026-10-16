@@ -1,7 +1,7 @@
 use crate::types::SubscriptionTarget;
 use serde::{Deserialize, Serialize};
 
-use super::Cmd;
+use super::{AuthOptional, Cmd};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct NewsletterSubscribe {
@@ -16,6 +16,7 @@ pub struct NewsletterSubscribe {
 
 impl Cmd for NewsletterSubscribe {
     type Output = ();
+    type Auth = AuthOptional;
     const METHOD: http::Method = http::Method::POST;
     const PATH: &'static str = "newsletter/subscribe";
 }

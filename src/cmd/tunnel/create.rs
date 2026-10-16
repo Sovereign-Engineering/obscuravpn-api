@@ -1,4 +1,4 @@
-use crate::cmd::Cmd;
+use crate::cmd::{AuthRequired, Cmd};
 use crate::types::OneTunnel;
 use crate::types::WgPubkey;
 use serde::{Deserialize, Serialize};
@@ -25,6 +25,7 @@ pub enum CreateTunnel {
 
 impl Cmd for CreateTunnel {
     type Output = OneTunnel;
+    type Auth = AuthRequired;
     const METHOD: http::Method = http::Method::POST;
     const PATH: &'static str = super::PATH;
 }

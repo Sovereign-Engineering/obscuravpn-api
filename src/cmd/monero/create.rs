@@ -1,5 +1,5 @@
 use crate::{
-    cmd::{Cmd, MoneroTopUpId},
+    cmd::{AuthRequired, Cmd, MoneroTopUpId},
     types::SaleId,
 };
 use serde::{Deserialize, Serialize};
@@ -35,6 +35,7 @@ pub struct CreateMoneroTopUp {
 
 impl Cmd for CreateMoneroTopUp {
     type Output = MoneroTopUpInfo;
+    type Auth = AuthRequired;
 
     const METHOD: http::Method = http::Method::POST;
     const PATH: &'static str = "monero/top_up";

@@ -1,4 +1,4 @@
-use crate::cmd::Cmd;
+use crate::cmd::{AuthRequired, Cmd};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -13,6 +13,7 @@ pub struct ClaimFriendCode {
 
 impl Cmd for ClaimFriendCode {
     type Output = ClaimFriendCodeOutput;
+    type Auth = AuthRequired;
 
     const METHOD: http::Method = http::Method::POST;
     const PATH: &'static str = "friend_codes/claim";

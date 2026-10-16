@@ -1,4 +1,7 @@
-use crate::{cmd::Cmd, types::SaleId};
+use crate::{
+    cmd::{AuthRequired, Cmd},
+    types::SaleId,
+};
 use serde::{Deserialize, Serialize};
 
 const LIGHTNING_TOP_UP_PATH: &str = "lightning/top_up";
@@ -40,6 +43,7 @@ pub struct CreateLightningTopUp {
 
 impl Cmd for CreateLightningTopUp {
     type Output = LightningTopUpInfo;
+    type Auth = AuthRequired;
 
     const METHOD: http::Method = http::Method::POST;
     const PATH: &'static str = LIGHTNING_TOP_UP_PATH;

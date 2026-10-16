@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::Cmd;
+use super::{AuthRequired, Cmd};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ReferralCode(pub String);
@@ -12,6 +12,7 @@ pub struct UseReferralCode {
 
 impl Cmd for UseReferralCode {
     type Output = ();
+    type Auth = AuthRequired;
     const METHOD: http::Method = http::Method::POST;
     const PATH: &'static str = "referral/use";
 }
@@ -35,6 +36,7 @@ pub struct RotateReferralCode {}
 
 impl Cmd for RotateReferralCode {
     type Output = ();
+    type Auth = AuthRequired;
     const METHOD: http::Method = http::Method::POST;
     const PATH: &'static str = "referral/rotate";
 }

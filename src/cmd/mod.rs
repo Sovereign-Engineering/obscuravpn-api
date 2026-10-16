@@ -23,7 +23,6 @@ pub use exit::*;
 pub use exit2::*;
 pub use friend_codes::*;
 pub use google::*;
-use http::HeaderValue;
 pub use lightning::*;
 pub use monero::*;
 pub use newsletter_subscribe::*;
@@ -40,36 +39,22 @@ use std::any::Any;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use thiserror::Error;
 use tokio_stream::StreamExt;
-use url::Url;
 
 use crate::ClientError;
 use crate::pow::PowParams;
 use crate::response::Response;
-use crate::types::AuthToken;
+
+pub trait CmdAuth {}
+pub struct AuthRequired;
+pub struct AuthOptional;
+impl CmdAuth for AuthRequired {}
+impl CmdAuth for AuthOptional {}
 
 pub trait Cmd: Serialize + DeserializeOwned + std::fmt::Debug {
     type Output: Serialize + DeserializeOwned + 'static + std::fmt::Debug;
+    type Auth: CmdAuth;
     const METHOD: http::Method;
     const PATH: &'static str;
-
-    fn to_request(&self, base_url: impl AsRef<str>, auth_token: &AuthToken, etag: Option<HeaderValue>) -> anyhow::Result<http::Request<String>> {
-        let url = Url::parse(base_url.as_ref())?.join(Self::PATH)?;
-        let mut request = http::Request::builder()
-            .method(Self::METHOD)
-            .uri(url.as_str())
-            .header(http::header::AUTHORIZATION, format!("Bearer {}", auth_token.as_str()))
-            .header(http::header::CONTENT_TYPE, "application/json")
-            .body(String::new())?;
-        if let Some(etag) = etag {
-            request.headers_mut().insert(http::header::IF_NONE_MATCH, etag);
-        }
-        if Self::METHOD == http::Method::GET {
-            // TODO: Support GET parameters: https://linear.app/soveng/issue/OBS-2002/support-get-query-parameters-in-rust-api-client
-        } else {
-            *request.body_mut() = serde_json::to_string(self)?;
-        }
-        Ok(request)
-    }
 }
 
 pub trait ETagCmd: Cmd {}

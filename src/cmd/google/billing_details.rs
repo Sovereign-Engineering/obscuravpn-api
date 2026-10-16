@@ -1,4 +1,4 @@
-use crate::cmd::Cmd;
+use crate::cmd::{AuthRequired, Cmd};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -8,6 +8,7 @@ pub struct GoogleBillingDetails {
 
 impl Cmd for GoogleBillingDetails {
     type Output = GoogleBillingDetailsOutput;
+    type Auth = AuthRequired;
 
     const METHOD: http::Method = http::Method::POST;
     const PATH: &'static str = "google/billing_details";

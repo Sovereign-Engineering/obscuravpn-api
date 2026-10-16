@@ -1,4 +1,4 @@
-use crate::cmd::Cmd;
+use crate::cmd::{AuthOptional, Cmd};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -24,6 +24,7 @@ pub struct NnnStatus {
 
 impl Cmd for ServiceStatus {
     type Output = ServiceStatusOutput;
+    type Auth = AuthOptional;
     const METHOD: http::Method = http::Method::GET;
     const PATH: &'static str = "status";
 }
