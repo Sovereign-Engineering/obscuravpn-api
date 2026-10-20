@@ -108,6 +108,9 @@ pub enum ApiErrorKind {
     /// The account is not active (funded) but tried to do an action that requires a funded account.
     AccountExpired {},
 
+    /// No nnn case has the given ID.
+    AdminNnnCaseNotFound {},
+
     /// This account already has a referrer.
     AlreadyReferred {},
 
