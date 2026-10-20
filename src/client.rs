@@ -97,7 +97,7 @@ pub enum ClientError {
     ProofOfWork(argon2::Error),
 }
 
-const POW_SOLVE_TIMEOUT: Duration = Duration::from_secs(10);
+const POW_SOLVE_TIMEOUT: Duration = Duration::from_secs(60);
 
 impl Client<Unauthenticated> {
     pub fn new_unauthenticated(
