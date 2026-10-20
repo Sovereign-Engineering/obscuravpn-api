@@ -33,7 +33,7 @@ tokio-stream = "0.1.17"
 tracing = "0.1.41"
 url = "2.5.4"
 uuid = { version = "1.17.0", features = ["v4", "serde"] }
-webpki-roots = { version = "1.0.0", optional = true }
+webpki-roots = { version = "1.0.10", optional = true }
 x509-parser = "0.17.0"
 
 [features]
