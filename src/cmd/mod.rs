@@ -195,6 +195,11 @@ pub enum ApiErrorKind {
         pow_challenge: Option<PowParams>,
     },
 
+    /// The requested relay is not available right now.
+    ///
+    /// Temporarily exclude this relay and retry with another one.
+    RelayUnavailable {},
+
     /// A purchase was attempted to be made with a specific offer that is not valid.
     ///
     /// If you are very unlucky it just expired, but this should never happen due to grace periods. Refresh the price list and try again.
