@@ -21,6 +21,7 @@ itertools = "0.14.0"
 rand = { version = "0.8.5"}
 reqwest = { git = "https://github.com/Sovereign-Engineering/reqwest", rev = "87cc6fc6edc6b3c8f65e5a6cd1d497e4eb8bf32f", default-features = false, features = ["json", "rustls", "stream"], optional = true }
 rustls = { version = "0.23.27", optional = true }
+rustls-platform-verifier = { version = "0.6.2", optional = true }
 semver = "1.0.26"
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0.140"
@@ -33,12 +34,11 @@ tokio-stream = "0.1.17"
 tracing = "0.1.41"
 url = "2.5.4"
 uuid = { version = "1.17.0", features = ["v4", "serde"] }
-webpki-roots = { version = "1.0.10", optional = true }
 x509-parser = "0.17.0"
 
 [features]
 default = ["client"]
-client = ["reqwest", "rustls", "webpki-roots", "tokio/rt", "tokio/time"]
+client = ["reqwest", "rustls", "rustls-platform-verifier", "tokio/rt", "tokio/time"]
 server = []
 
 [dev-dependencies]

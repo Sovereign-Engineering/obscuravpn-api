@@ -8,7 +8,6 @@ use http::HeaderValue;
 use itertools::Itertools;
 use reqwest::ClientBuilder;
 use reqwest::dns::Resolve;
-use rustls::client::WebPkiServerVerifier;
 use std::iter::once;
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -65,6 +64,7 @@ impl ClientAuth for Authenticated {
 
 impl<R: CmdAuth> CanRun<R> for Authenticated {}
 
+/// On Android, `rustls_platform_verifier::android::init_with_env` must have been called before constructing one, or certificate verification panics.
 #[derive(Debug)]
 pub struct Client<A = Authenticated> {
     auth: A,
@@ -452,30 +452,27 @@ impl<A> Client<A> {
     }
 
     fn rustls_config(server_name_for_cert_verification: impl IntoIterator<Item = String>) -> anyhow::Result<rustls::ClientConfig> {
-        let crypto = rustls::ClientConfig::builder()
-            .dangerous()
-            .with_custom_certificate_verifier(VerifyApiServerCert::new(server_name_for_cert_verification)?)
-            .with_no_client_auth();
+        let builder = rustls::ClientConfig::builder();
+        let verifier = VerifyApiServerCert::new(server_name_for_cert_verification, builder.crypto_provider().clone())?;
+        let crypto = builder.dangerous().with_custom_certificate_verifier(verifier).with_no_client_auth();
         Ok(crypto)
     }
 }
 
 #[derive(Debug)]
 struct VerifyApiServerCert {
+    platform_verifier: Arc<dyn rustls::client::danger::ServerCertVerifier>,
     server_names: Vec<rustls::pki_types::ServerName<'static>>,
-    web_pki_server_verifier: Arc<dyn rustls::client::danger::ServerCertVerifier>,
 }
 
 impl VerifyApiServerCert {
-    fn new(server_names: impl IntoIterator<Item = String>) -> anyhow::Result<Arc<Self>> {
-        let roots = rustls::RootCertStore {
-            roots: webpki_roots::TLS_SERVER_ROOTS.to_vec(),
-        };
-        let web_pki_server_verifier = WebPkiServerVerifier::builder(roots.into()).build()?;
+    fn new(server_names: impl IntoIterator<Item = String>, crypto_provider: Arc<rustls::crypto::CryptoProvider>) -> anyhow::Result<Arc<Self>> {
+        let platform_verifier =
+            rustls_platform_verifier::Verifier::new(crypto_provider).context("failed to initialize platform certificate verifier")?;
         let server_names = server_names.into_iter().map(rustls::pki_types::ServerName::try_from).try_collect()?;
         Ok(Arc::new(Self {
+            platform_verifier: Arc::new(platform_verifier),
             server_names,
-            web_pki_server_verifier,
         }))
     }
 }
@@ -507,7 +504,7 @@ impl rustls::client::danger::ServerCertVerifier for VerifyApiServerCert {
         let mut first_non_server_name_error = None;
         for verify_server_name in self.server_names.iter() {
             let result = self
-                .web_pki_server_verifier
+                .platform_verifier
                 .verify_server_cert(end_entity, intermediates, verify_server_name, ocsp_response, now);
             match result {
                 Ok(result) => {
@@ -550,7 +547,7 @@ impl rustls::client::danger::ServerCertVerifier for VerifyApiServerCert {
         cert: &rustls::pki_types::CertificateDer<'_>,
         dss: &rustls::DigitallySignedStruct,
     ) -> Result<rustls::client::danger::HandshakeSignatureValid, rustls::Error> {
-        self.web_pki_server_verifier.verify_tls12_signature(message, cert, dss)
+        self.platform_verifier.verify_tls12_signature(message, cert, dss)
     }
     fn verify_tls13_signature(
         &self,
@@ -558,10 +555,10 @@ impl rustls::client::danger::ServerCertVerifier for VerifyApiServerCert {
         cert: &rustls::pki_types::CertificateDer<'_>,
         dss: &rustls::DigitallySignedStruct,
     ) -> Result<rustls::client::danger::HandshakeSignatureValid, rustls::Error> {
-        self.web_pki_server_verifier.verify_tls13_signature(message, cert, dss)
+        self.platform_verifier.verify_tls13_signature(message, cert, dss)
     }
 
     fn supported_verify_schemes(&self) -> Vec<rustls::SignatureScheme> {
-        self.web_pki_server_verifier.supported_verify_schemes()
+        self.platform_verifier.supported_verify_schemes()
     }
 }
