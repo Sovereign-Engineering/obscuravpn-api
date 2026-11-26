@@ -27,9 +27,6 @@ fn test_json() {
         "client_ips_v6": ["fc00:bbbb:bbbb:bb01:d:0:16:b107/128"],
         "dns": ["10.64.0.1"],
         "gateway_ip_v4": "10.64.0.1",
-        "relay_addr_v4": "8.8.31.3:443",
-        "relay_addr_v6": "[2001:db8:1234:ffff:ffff:ffff:ffff:ffff]:443",
-        "relay_cert": "asdf",
         "exit_pubkey": "4s9JIhxC/D02tosXYYcgrD+pHI+C7oTAFsXzVisKjRs="
       },
       "relay": {
