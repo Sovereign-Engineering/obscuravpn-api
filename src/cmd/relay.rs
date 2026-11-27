@@ -31,6 +31,17 @@ fn test_json() {
     "preferred_exits": [{ "id": "nyc-wg-30" }],
     "tls_cert": "MIIBWjCCAQGgAwIBAgIVAK3WuHUPFg+mmBGiDhW9VNjDmudKMAoGCCqGSM49BAMCMCExHzAdBgNVBAMMFnJjZ2VuIHNlbGYgc2lnbmVkIGNlcnQwIBcNNzUwMTAxMDAwMDAwWhgPNDA5NjAxMDEwMDAwMDBaMCExHzAdBgNVBAMMFnJjZ2VuIHNlbGYgc2lnbmVkIGNlcnQwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAASLPcQhOgBGP8HRlGBy6rTO7SWnGgSuCEW6hi+Q/wnUr8H9FkJC7UGD9738XGKEq35ZKybrekr0DbK8YsVZ8SX+oxQwEjAQBgNVHREECTAHggVyZWxheTAKBggqhkjOPQQDAgNHADBEAiAYnVn/bozbp6u0iShFfUgbdGvAvf/hXwLhgonj+Fh+xAIgUgfQqvWFPbh3BNu98LhNFrESngTHtYYAOWt3wZdQOm4=",
     "ports": [53, 443]
+  },
+  {
+    "id": "YYZ-001",
+    "country_code": "CA",
+    "city_code": "yyz",
+    "city_name": "Toronto",
+    "ip_v4": "8.8.31.4",
+    "ip_v6": null,
+    "preferred_exits": [{ "id": "yyz-wg-30" }],
+    "tls_cert": "MIIBWjCCAQGgAwIBAgIVAK3WuHUPFg+mmBGiDhW9VNjDmudKMAoGCCqGSM49BAMCMCExHzAdBgNVBAMMFnJjZ2VuIHNlbGYgc2lnbmVkIGNlcnQwIBcNNzUwMTAxMDAwMDAwWhgPNDA5NjAxMDEwMDAwMDBaMCExHzAdBgNVBAMMFnJjZ2VuIHNlbGYgc2lnbmVkIGNlcnQwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAASLPcQhOgBGP8HRlGBy6rTO7SWnGgSuCEW6hi+Q/wnUr8H9FkJC7UGD9738XGKEq35ZKybrekr0DbK8YsVZ8SX+oxQwEjAQBgNVHREECTAHggVyZWxheTAKBggqhkjOPQQDAgNHADBEAiAYnVn/bozbp6u0iShFfUgbdGvAvf/hXwLhgonj+Fh+xAIgUgfQqvWFPbh3BNu98LhNFrESngTHtYYAOWt3wZdQOm4=",
+    "ports": [53, 443]
   }
     ]"#;
     crate::cmd::check_cmd_json::<ListRelays>(None, Some(output_json));

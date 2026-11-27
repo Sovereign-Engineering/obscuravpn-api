@@ -487,17 +487,14 @@ pub struct OneRelay {
 
     pub preferred_exits: Vec<RelayPreferredExit>,
 
-    /// Unused. Set for compatibility with old clients.
-    ///
-    /// https://linear.app/soveng/issue/OBS-1318
-    #[cfg(feature = "server")]
-    #[serde(default = "localhost_ip_v6")]
-    pub ip_v6: net::Ipv6Addr,
-
     /// The IPv4 address where the QUIC API is available.
     ///
     /// The API is available on all of the ports listed in `ports`.
     pub ip_v4: net::Ipv4Addr,
+    /// The IPv6 address where the QUIC API is available, on the same ports as `ip_v4`.
+    ///
+    /// `None` if the relay is only reachable over IPv4.
+    pub ip_v6: Option<net::Ipv6Addr>,
     pub ports: Vec<u16>,
     /// The TLS cert for the QUIC API.
     #[debug("{:?}", BASE64_STANDARD.encode(tls_cert))]
@@ -631,11 +628,6 @@ impl From<AuthToken> for String {
     fn from(value: AuthToken) -> Self {
         value.0
     }
-}
-
-#[cfg(feature = "server")]
-fn localhost_ip_v6() -> net::Ipv6Addr {
-    net::Ipv6Addr::LOCALHOST
 }
 
 /// A Monero top-up with an in-progress payment.
